@@ -21,6 +21,13 @@ test('harness exposes representative state without authentication', () => withSe
   assert.equal('isCorrect' in state.currentQuestion.options[0], false);
 }));
 
+test('harness loads its top-level-await client as a module', () => withServer(async (origin) => {
+  const response = await fetch(origin);
+  const page = await response.text();
+  assert.equal(response.status, 200);
+  assert.match(page, /<script type="module">/);
+}));
+
 test('harness provides a direct answer-validation surface', () => withServer(async (origin) => {
   const response = await fetch(`${origin}/api/answers/validate`, {
     method: 'POST', headers: { 'content-type': 'application/json' },

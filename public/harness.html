@@ -22,7 +22,7 @@
     <button>Validate answer contract</button>
   </form>
   <section class="card"><strong>API response</strong><pre id="result">Choose an answer.</pre></section>
-  <script>
+  <script type="module">
     const state = await fetch('/api/state').then((response) => response.json());
     const question = state.currentQuestion;
     document.querySelector('#summary').textContent = `${state.quiz.title} · code ${state.session.joinCode} · ${state.participants.length} players`;
