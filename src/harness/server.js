@@ -29,7 +29,10 @@ const liveAssets = new Map([
 
 export async function createHarnessServer({ clock } = {}) {
   const store = createCreatorStore(creatorQuizzes, clock);
-  const game = createPlayerGame({ quiz, session, ...(clock ? { clock } : {}) });
+  const gameOptions = { quiz, session, ...(clock ? { clock } : {}) };
+  let scoringMode = 'speed_weighted';
+  let game = createPlayerGame({ ...gameOptions, scoringMode });
+  let rivals = [];
   const database = new DatabaseSync(':memory:');
   await applySchema(database);
   const service = new AuthService(new AuthRepository(database));
@@ -73,8 +76,30 @@ export async function createHarnessServer({ clock } = {}) {
       if (request.method === 'POST' && request.url === '/api/player/harness/advance') {
         game.advance(); return json(response, 200, { advanced: true });
       }
+      if (request.method === 'POST' && request.url === '/api/player/harness/rivals') {
+        const active = rivals.map((rival) => ({ rival, state: game.state(rival.participantId) }))
+          .filter(({ state }) => state.phase === 'question');
+        if (!rivals.length) {
+          rivals = ['Quasar', 'Pulsar', 'Comet'].map((nickname) =>
+            game.join({ joinCode: session.joinCode, nickname, reconnectToken: null }));
+          active.push(...rivals.map((rival) => ({ rival, state: game.state(rival.participantId) })));
+        }
+        const responseTimes = [1000, 9000, 19000];
+        active.forEach(({ rival, state }, index) => {
+          const question = quiz.questions.find(({ id }) => id === state.question.questionId);
+          const correct = question.options.filter(({ isCorrect }) => isCorrect).map(({ id }) => id);
+          game.answer({ sessionId: session.id, participantId: rival.participantId,
+            questionId: question.id, optionIds: index === 2 ? [question.options.find(({ isCorrect }) => !isCorrect).id] : correct,
+            responseTimeMs: Math.min(responseTimes[index], question.timeLimitSeconds * 1000) });
+        });
+        return json(response, 200, { leaderboard: game.leaderboard() });
+      }
       if (request.method === 'POST' && request.url === '/api/player/harness/reset') {
-        game.reset(); return json(response, 200, { reset: true });
+        const input = await readJson(request);
+        scoringMode = input.scoringMode || scoringMode;
+        game = createPlayerGame({ ...gameOptions, scoringMode });
+        rivals = [];
+        return json(response, 200, { reset: true, scoringMode });
       }
       if (request.method === 'GET' && request.url === '/creator') {
         return send(response, 200, await readFile(creatorPageUrl, 'utf8'), 'text/html; charset=utf-8');

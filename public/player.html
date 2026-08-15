@@ -12,13 +12,14 @@
       <form id="join-form">
         <label>Game PIN<input name="joinCode" value="ORBIT1" autocomplete="one-time-code" maxlength="12" required></label>
         <label>Nickname<input name="nickname" placeholder="Your nickname" maxlength="40" autocomplete="nickname" required></label>
+        <label>Scoring<select name="scoringMode"><option value="speed_weighted">Speed-weighted</option><option value="fixed">Fixed points</option></select></label>
         <button>Let's go</button><p class="error" role="alert"></p>
       </form>
       <p class="harness">Player test harness · no account required · try PIN <strong>ORBIT1</strong></p>
     </section>
     <section id="game" class="panel hidden" aria-live="polite"></section>
   </main>
-  <footer class="controls"><button id="next" class="secondary">Harness: next question</button><button id="reset" class="secondary">Reset demo</button></footer>
+  <footer class="controls"><button id="rivals" class="secondary">Add mock rival answers</button><button id="next" class="secondary">Harness: next question</button><button id="reset" class="secondary">Reset demo</button></footer>
   <script type="module" src="/player.js"></script>
 </body>
 </html>

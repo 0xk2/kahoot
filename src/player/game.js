@@ -1,8 +1,11 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { parseJoinSessionInput, parseSubmitAnswerInput } from '../contracts/index.js';
+import { calculatePoints, rankPlayers, SCORING_MODES } from './scoring.js';
 
-export function createPlayerGame({ quiz, session, clock = () => new Date() }) {
+export function createPlayerGame({ quiz, session, clock = () => new Date(), scoringMode = 'speed_weighted' }) {
+  if (!SCORING_MODES.includes(scoringMode)) throw new TypeError(`Unknown scoring mode: ${scoringMode}`);
   let questionIndex = 0;
+  let joinOrder = 0;
   const players = new Map();
   const tokens = new Map();
 
@@ -19,7 +22,7 @@ export function createPlayerGame({ quiz, session, clock = () => new Date() }) {
     if ([...players.values()].some((player) => player.nickname.toLowerCase() === nickname.toLowerCase())) {
       throw new PlayerGameError('That nickname is already taken', 409);
     }
-    const player = { id: randomUUID(), nickname, score: 0, answers: new Map() };
+    const player = { id: randomUUID(), nickname, score: 0, answers: new Map(), joinOrder: joinOrder++ };
     const reconnectToken = randomBytes(24).toString('base64url');
     players.set(player.id, player);
     tokens.set(reconnectToken, player.id);
@@ -29,11 +32,13 @@ export function createPlayerGame({ quiz, session, clock = () => new Date() }) {
   function state(playerId) {
     const player = requirePlayer(playerId);
     const question = quiz.questions[questionIndex];
-    if (!question) return { phase: 'completed', player: publicPlayer(player), totalQuestions: quiz.questions.length };
+    if (!question) return { phase: 'completed', player: publicPlayer(player), totalQuestions: quiz.questions.length,
+      scoringMode, leaderboard: leaderboard() };
     const prior = player.answers.get(question.id);
     return {
       phase: prior ? 'feedback' : session.status === 'lobby' ? 'lobby' : 'question',
-      player: publicPlayer(player), question: publicQuestion(question), result: prior?.result ?? null
+      player: publicPlayer(player), question: publicQuestion(question), result: prior?.result ?? null,
+      scoringMode, leaderboard: prior ? leaderboard() : null
     };
   }
 
@@ -52,17 +57,20 @@ export function createPlayerGame({ quiz, session, clock = () => new Date() }) {
     if (question.type === 'single_choice' && selected.size !== 1) throw new PlayerGameError('Select one answer');
     const correctIds = question.options.filter((option) => option.isCorrect).map((option) => option.id);
     const isCorrect = selected.size === correctIds.length && correctIds.every((id) => selected.has(id));
-    const speed = Math.max(0, 1 - input.responseTimeMs / (question.timeLimitSeconds * 1000));
-    const pointsAwarded = isCorrect ? Math.round(question.points * (0.5 + speed * 0.5)) : 0;
+    const pointsAwarded = calculatePoints({ isCorrect, points: question.points,
+      responseTimeMs: input.responseTimeMs, timeLimitSeconds: question.timeLimitSeconds, mode: scoringMode });
     player.score += pointsAwarded;
     const result = { isCorrect, pointsAwarded, correctOptionIds: correctIds,
-      explanation: question.explanation, totalScore: player.score };
+      explanation: question.explanation, totalScore: player.score,
+      selectedOptionIds: [...selected], reveal: question.options.map(({ id, text, isCorrect: correct }) =>
+        ({ id, text, isCorrect: correct, isSelected: selected.has(id) })) };
     player.answers.set(question.id, { optionIds: [...selected], result });
     return result;
   }
 
   function advance() { questionIndex = Math.min(questionIndex + 1, quiz.questions.length); }
-  function reset() { questionIndex = 0; players.clear(); tokens.clear(); }
+  function reset() { questionIndex = 0; joinOrder = 0; players.clear(); tokens.clear(); }
+  function leaderboard() { return rankPlayers(players.values()); }
   function joined(player, reconnectToken) {
     return { sessionId: session.id, participantId: player.id, nickname: player.nickname, reconnectToken };
   }
@@ -78,7 +86,7 @@ export function createPlayerGame({ quiz, session, clock = () => new Date() }) {
       totalQuestions: quiz.questions.length,
       closesAt: new Date(clock().getTime() + question.timeLimitSeconds * 1000).toISOString() };
   }
-  return { join, state, answer, advance, reset };
+  return { join, state, answer, advance, reset, leaderboard };
 }
 
 export class PlayerGameError extends Error {
