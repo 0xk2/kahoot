@@ -3,10 +3,16 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { harnessState } from './mock-data.js';
 import { ContractError, parseSubmitAnswerInput } from '../contracts/index.js';
+import { creatorQuizzes } from './creator-data.js';
+import { createCreatorStore } from '../creator/store.js';
 
 const pageUrl = new URL('../../public/harness.html', import.meta.url);
+const creatorPageUrl = new URL('../../public/creator.html', import.meta.url);
+const creatorScriptUrl = new URL('../../public/creator.js', import.meta.url);
+const creatorStyleUrl = new URL('../../public/creator.css', import.meta.url);
 
-export function createHarnessServer() {
+export function createHarnessServer({ clock } = {}) {
+  const store = createCreatorStore(creatorQuizzes, clock);
   return createServer(async (request, response) => {
     try {
       if (request.method === 'GET' && request.url === '/') {
@@ -14,6 +20,31 @@ export function createHarnessServer() {
       }
       if (request.method === 'GET' && request.url === '/api/state') {
         return json(response, 200, harnessState());
+      }
+      if (request.method === 'GET' && request.url === '/creator') {
+        return send(response, 200, await readFile(creatorPageUrl, 'utf8'), 'text/html; charset=utf-8');
+      }
+      if (request.method === 'GET' && request.url === '/creator.js') {
+        return send(response, 200, await readFile(creatorScriptUrl, 'utf8'), 'text/javascript; charset=utf-8');
+      }
+      if (request.method === 'GET' && request.url === '/creator.css') {
+        return send(response, 200, await readFile(creatorStyleUrl, 'utf8'), 'text/css; charset=utf-8');
+      }
+      if (request.method === 'GET' && request.url.startsWith('/api/creator/quizzes')) {
+        const url = new URL(request.url, 'http://localhost');
+        const id = url.pathname.split('/')[4];
+        if (id) return store.get(id) ? json(response, 200, store.get(id)) : json(response, 404, { error: 'Quiz not found' });
+        return json(response, 200, store.list(Object.fromEntries(url.searchParams)));
+      }
+      if (request.method === 'POST' && request.url === '/api/creator/quizzes') {
+        return json(response, 201, store.create());
+      }
+      if (request.method === 'PUT' && request.url.startsWith('/api/creator/quizzes/')) {
+        const id = request.url.split('/')[4];
+        const input = await readJson(request);
+        if (input.id !== id) return json(response, 400, { error: 'Quiz id does not match URL' });
+        const saved = store.save(input);
+        return saved ? json(response, 200, saved) : json(response, 404, { error: 'Quiz not found' });
       }
       if (request.method === 'POST' && request.url === '/api/answers/validate') {
         const answer = parseSubmitAnswerInput(await readJson(request));
