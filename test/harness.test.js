@@ -93,6 +93,19 @@ test('player harness supports direct anonymous join and question retrieval', () 
   assert.equal(result.totalScore > 0, true);
 }));
 
+test('progression harness switches to independent player pacing', () => withServer(async (origin) => {
+  const modeResponse = await fetch(`${origin}/api/player/harness/mode`, { method: 'POST',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mode: 'player' }) });
+  assert.deepEqual(await modeResponse.json(), { mode: 'player' });
+  const joined = await fetch(`${origin}/api/player/join`, { method: 'POST',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ joinCode: 'ORBIT1',
+      nickname: 'Paced', reconnectToken: null }) }).then((response) => response.json());
+  const early = await fetch(`${origin}/api/player/harness/advance`, { method: 'POST',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ participantId: joined.participantId }) });
+  assert.equal(early.status, 409);
+  assert.match((await early.json()).error, /Answer or wait/);
+}));
+
 test('live harness creates, joins, reconnects, and starts an auth-free room', () => withServer(async (origin) => {
   const page = await fetch(`${origin}/live`).then((response) => response.text());
   assert.match(page, /R1-4 test harness · auth bypassed/);

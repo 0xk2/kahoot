@@ -4,6 +4,7 @@ const identity = document.querySelector('#identity');
 let player = JSON.parse(sessionStorage.getItem('kahoot-player') || 'null');
 let questionStarted = 0;
 let timer;
+let currentState;
 
 document.querySelector('#join-form').addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -19,6 +20,7 @@ async function refresh() {
   if (!player) return;
   try {
     const state = await api(`/api/player/state?participantId=${encodeURIComponent(player.participantId)}`);
+    currentState = state;
     joinPanel.classList.add('hidden'); gamePanel.classList.remove('hidden'); identity.textContent = state.player.nickname;
     if (state.phase === 'completed') return renderCompleted(state);
     if (state.phase === 'lobby') return renderLobby(state);
@@ -40,15 +42,18 @@ function renderQuestion(state) {
     button.classList.toggle('selected', selected.has(button.dataset.id)); submit.disabled = !selected.size;
   };
   submit.onclick = async () => { try { await api('/api/player/answer', { method: 'POST', body: { sessionId: player.sessionId, participantId: player.participantId, questionId: q.questionId, optionIds: [...selected], responseTimeMs: Date.now() - questionStarted } }); await refresh(); } catch (error) { gamePanel.querySelector('.error').textContent = error.message; } };
-  const updateTimer = () => { const seconds = Math.max(0, Math.ceil((new Date(q.closesAt) - Date.now()) / 1000)); gamePanel.querySelector('.timer').textContent = `${seconds}s`; };
+  const updateTimer = () => { const seconds = Math.max(0, Math.ceil((new Date(q.closesAt) - Date.now()) / 1000)); gamePanel.querySelector('.timer').textContent = `${seconds}s`; if (!seconds) refresh(); };
   updateTimer(); timer = setInterval(updateTimer, 1000);
 }
 function renderFeedback(state) {
   clearInterval(timer); const result = state.result;
-  gamePanel.innerHTML = `<div class="result"><p class="eyebrow">${result.isCorrect ? 'Correct!' : 'Not this time'}</p><h1>${result.isCorrect ? `+${result.pointsAwarded} points` : 'Keep going!'}</h1><p>${escape(result.explanation || '')}</p><p class="score">Score: ${result.totalScore}</p><p>Waiting for the next question…</p></div>`;
+  gamePanel.innerHTML = `<div class="result"><p class="eyebrow">${result.timedOut ? 'Time expired' : result.isCorrect ? 'Correct!' : 'Not this time'}</p><h1>${result.isCorrect ? `+${result.pointsAwarded} points` : 'Keep going!'}</h1><p>${escape(result.explanation || '')}</p><p class="score">Score: ${result.totalScore}</p><p>${state.mode === 'host' ? 'Waiting for the host to continue…' : 'Use Advance when you are ready.'}</p></div>`;
 }
 async function api(path, options = {}) { const response = await fetch(path, { ...options, headers: options.body ? { 'content-type': 'application/json' } : {}, body: options.body ? JSON.stringify(options.body) : undefined }); const body = await response.json(); if (!response.ok) throw new Error(body.error || 'Something went wrong'); return body; }
 function escape(value) { const element = document.createElement('span'); element.textContent = value; return element.innerHTML; }
-document.querySelector('#next').onclick = async () => { await api('/api/player/harness/advance', { method: 'POST', body: {} }); await refresh(); };
+document.querySelector('#next').onclick = async () => { try { await api('/api/player/harness/advance', { method: 'POST', body: { participantId: currentState?.mode === 'player' ? player?.participantId : null } }); await refresh(); } catch (error) { alert(error.message); } };
+async function chooseMode(mode) { await api('/api/player/harness/mode', { method: 'POST', body: { mode } }); sessionStorage.removeItem('kahoot-player'); location.reload(); }
+document.querySelector('#host-mode').onclick = () => chooseMode('host');
+document.querySelector('#player-mode').onclick = () => chooseMode('player');
 document.querySelector('#reset').onclick = async () => { await api('/api/player/harness/reset', { method: 'POST', body: {} }); sessionStorage.removeItem('kahoot-player'); location.reload(); };
 refresh();
