@@ -32,6 +32,9 @@ npm test
 npm run harness
 ```
 
+For tailnet access, run `HOST=$(tailscale ip -4) npm run harness` and open
+<http://sontra.tailc1c4f8.ts.net:4173>.
+
 Open <http://127.0.0.1:4173> for the issue R1-2 human test harness. It uses an isolated in-memory
 database and directly exposes register, login, current-session, and logout actions without any
 unrelated application authentication. Use `demo_creator` / `correct horse battery staple`, or

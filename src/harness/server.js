@@ -57,7 +57,8 @@ async function readJson(request) {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const port = Number(process.env.PORT || 4173);
-  (await createHarnessServer()).listen(port, '127.0.0.1', () => {
-    console.log(`Contract harness: http://127.0.0.1:${port}`);
+  const host = process.env.HOST || '127.0.0.1';
+  (await createHarnessServer()).listen(port, host, () => {
+    console.log(`Contract harness: http://${host}:${port}`);
   });
 }
