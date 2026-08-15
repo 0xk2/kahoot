@@ -17,7 +17,7 @@ function fixture() {
     db.prepare('INSERT INTO answer_options VALUES (?, ?, ?, ?, ?)').run('o1', 'q1', 'Yes', 1, 0);
     db.prepare('INSERT INTO answer_options VALUES (?, ?, ?, ?, ?)').run('o2', 'q1', 'No', 0, 1);
     db.prepare('INSERT INTO game_sessions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-      .run('s1', 'qz1', 'u1', 'PLAY1', 'active', 0, now, now, null);
+      .run('s1', 'qz1', 'u1', 'PLAY01', 'active', 0, now, now, null);
     return { db, now };
   });
 }
@@ -44,9 +44,9 @@ test('schema enforces enums, uniqueness, and foreign keys', async () => {
   assert.throws(() => db.prepare('INSERT INTO participants VALUES (?, ?, ?, ?, ?, ?, ?)')
     .run('p1', 'missing', 'Ada', 'hash', 'connected', 0, now), /FOREIGN KEY/);
   assert.throws(() => db.prepare('INSERT INTO game_sessions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    .run('s2', 'qz1', 'u1', 'play1', 'lobby', null, now, null, null), /UNIQUE/);
+    .run('s2', 'qz1', 'u1', 'play01', 'lobby', null, now, null, null), /UNIQUE/);
   db.prepare('INSERT INTO game_sessions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    .run('s2', 'qz1', 'u1', 'PLAY2', 'active', 0, now, now, null);
+    .run('s2', 'qz1', 'u1', 'PLAY02', 'active', 0, now, now, null);
   db.prepare('INSERT INTO participants VALUES (?, ?, ?, ?, ?, ?, ?)')
     .run('p2', 's2', 'Grace', 'hash-2', 'connected', 0, now);
   db.prepare('INSERT INTO session_questions VALUES (?, ?, ?, ?, ?)').run('s1', 'q1', 0, now, null);
@@ -61,5 +61,17 @@ test('deleting a quiz cascades authoring content but protects played sessions', 
   db.prepare('DELETE FROM game_sessions WHERE id = ?').run('s1');
   db.prepare('DELETE FROM quizzes WHERE id = ?').run('qz1');
   assert.equal(db.prepare('SELECT count(*) count FROM quiz_questions').get().count, 0);
+  db.close();
+});
+
+test('schema limits a room to 50 non-removed participants', async () => {
+  const { db, now } = await fixture();
+  const insert = db.prepare('INSERT INTO participants VALUES (?, ?, ?, ?, ?, ?, ?)');
+  for (let index = 0; index < 50; index += 1) {
+    insert.run(`p${index}`, 's1', `Player ${index}`, `hash-${index}`, 'connected', 0, now);
+  }
+  assert.throws(() => insert.run('overflow', 's1', 'Overflow', 'hash-overflow', 'connected', 0, now), /room is full/);
+  db.prepare('UPDATE participants SET status = ? WHERE id = ?').run('removed', 'p0');
+  insert.run('replacement', 's1', 'Replacement', 'hash-replacement', 'connected', 0, now);
   db.close();
 });

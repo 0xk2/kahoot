@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS game_sessions (
   id TEXT PRIMARY KEY,
   quiz_id TEXT NOT NULL REFERENCES quizzes(id) ON DELETE RESTRICT,
   host_id TEXT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-  join_code TEXT NOT NULL COLLATE NOCASE UNIQUE,
+  join_code TEXT NOT NULL COLLATE NOCASE UNIQUE CHECK (length(join_code) = 6),
   status TEXT NOT NULL DEFAULT 'lobby' CHECK (status IN ('lobby', 'active', 'completed', 'cancelled')),
   current_question_index INTEGER CHECK (current_question_index >= 0),
   created_at TEXT NOT NULL,
@@ -119,3 +119,10 @@ CREATE INDEX IF NOT EXISTS idx_participants_session ON participants(session_id, 
 CREATE INDEX IF NOT EXISTS idx_answers_participant ON answers(participant_id);
 CREATE INDEX IF NOT EXISTS idx_auth_sessions_user ON auth_sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_auth_sessions_expiry ON auth_sessions(expires_at);
+
+CREATE TRIGGER IF NOT EXISTS limit_session_participants
+BEFORE INSERT ON participants
+WHEN (SELECT count(*) FROM participants WHERE session_id = NEW.session_id AND status != 'removed') >= 50
+BEGIN
+  SELECT RAISE(ABORT, 'room is full (50 players)');
+END;

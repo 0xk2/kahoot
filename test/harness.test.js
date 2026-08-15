@@ -92,3 +92,23 @@ test('player harness supports direct anonymous join and question retrieval', () 
   assert.equal(result.isCorrect, true);
   assert.equal(result.totalScore > 0, true);
 }));
+
+test('live harness creates, joins, reconnects, and starts an auth-free room', () => withServer(async (origin) => {
+  const page = await fetch(`${origin}/live`).then((response) => response.text());
+  assert.match(page, /R1-4 test harness · auth bypassed/);
+  const roomResponse = await fetch(`${origin}/api/rooms`, { method: 'POST',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ quizId: 'quiz-space' }) });
+  const room = await roomResponse.json();
+  assert.equal(roomResponse.status, 201);
+  assert.match(room.joinCode, /^[A-Z0-9]{6}$/);
+  assert.equal(room.joinUrl, `${origin}/live?pin=${room.joinCode}`);
+  const join = await fetch(`${origin}/api/rooms/join`, { method: 'POST',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ joinCode: room.joinCode,
+      nickname: 'Mae', reconnectToken: null }) }).then((response) => response.json());
+  assert.equal(join.participant.nickname, 'Mae');
+  assert.ok(join.reconnectToken.length >= 32);
+  const active = await fetch(`${origin}/api/rooms/${room.joinCode}/lifecycle`, { method: 'POST',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ status: 'active' }) }).then((response) => response.json());
+  assert.equal(active.status, 'active');
+  assert.equal(active.participants.length, 1);
+}));

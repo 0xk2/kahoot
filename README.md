@@ -55,6 +55,21 @@ a contract error. Important edges: every question needs 2–10 answers and at le
 answer; single choice accepts exactly one correct answer; timers are 5–300 seconds; points are
 0–100,000. The editor prevents removing the final question or reducing an answer set below two.
 
+### R1-4 live-room harness
+
+Run `npm run harness`, then open <http://127.0.0.1:4173/live>. Authentication is bypassed only
+for this local test surface. Create a room to see its unique six-character PIN, join URL, QR code,
+50-player counter, and host controls. Open the join URL in another browser tab, choose a nickname,
+and watch the lobby update. The “Simulate disconnect” action marks the player offline and then
+reconnects with the browser-held token while preserving their identity.
+
+Expected result: the host can start, complete, or cancel a valid lifecycle and remove players;
+players see lifecycle updates within one second. Important edges: duplicate nicknames (including
+case changes), a 51st player, joins after start, invalid reconnect tokens, and reconnects after a
+room ends are rejected. The QR image is provided by `api.qrserver.com`, so its preview needs network
+access; the adjacent join link always remains available. For tailnet testing, use
+`HOST=$(tailscale ip -4) npm run harness` and open <http://sontra.tailc1c4f8.ts.net:4173/live>.
+
 ### R1-5 player harness
 
 Run `HOST=$(tailscale ip -4) npm run harness`, then open
