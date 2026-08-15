@@ -25,6 +25,9 @@ Edit it as the project evolves; instructions closest to the code take precedence
 - When a human test surface is requested, bind it to this machine's Tailscale IPv4 address with
   `HOST=$(tailscale ip -4) npm run harness` and report the clickable MagicDNS URL using the port
   from the harness (currently `http://sontra.tailc1c4f8.ts.net:4173`). Do not bind to `0.0.0.0`.
+- Keep a reported human test harness running after verification so its link remains usable for
+  review. Launch it as a detached process when the current command session will end, verify the
+  MagicDNS URL after detaching, and report where its runtime log is stored.
 
 ## Production guard
 
