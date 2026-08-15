@@ -45,12 +45,22 @@ test('disconnect and reconnect preserve identity while invalid tokens fail', () 
 test('room lifecycle only follows lobby to active to completed', () => {
   const service = fixture();
   const room = service.create({ quizId: 'quiz-space' });
-  assert.throws(() => service.transition(room.joinCode, 'completed'), /Cannot change/);
-  const active = service.transition(room.joinCode, 'active');
+  assert.throws(() => service.transition(room.joinCode, 'completed', 'user-host', 0), /Cannot change/);
+  const active = service.transition(room.joinCode, 'active', 'user-host', 0);
   assert.equal(active.currentQuestionIndex, 0);
   assert.ok(active.startedAt);
   assert.throws(() => service.join({ joinCode: room.joinCode, nickname: 'Late', reconnectToken: null }), /already started/);
-  const completed = service.transition(room.joinCode, 'completed');
+  const completed = service.transition(room.joinCode, 'completed', 'user-host', 1);
   assert.ok(completed.endedAt);
-  assert.throws(() => service.transition(room.joinCode, 'active'), /Cannot change/);
+  assert.throws(() => service.transition(room.joinCode, 'active', 'user-host', 2), /Cannot change/);
+});
+
+test('host mutations require ownership and reject stale concurrent writes', () => {
+  const service = fixture();
+  const room = service.create({ quizId: 'quiz-space' }, 'creator-1');
+  assert.throws(() => service.transition(room.joinCode, 'active', 'attacker', 0), /authorization/);
+  const active = service.transition(room.joinCode, 'active', 'creator-1', 0);
+  assert.equal(active.revision, 1);
+  assert.throws(() => service.transition(room.joinCode, 'completed', 'creator-1', 0), /refresh/);
+  assert.equal(service.get(room.joinCode).status, 'active');
 });

@@ -123,7 +123,7 @@ test('progression harness switches to independent player pacing', () => withServ
 
 test('live harness creates, joins, reconnects, and starts an auth-free room', () => withServer(async (origin) => {
   const page = await fetch(`${origin}/live`).then((response) => response.text());
-  assert.match(page, /R1-4 test harness · auth bypassed/);
+  assert.match(page, /R1-8 integrated test harness · auth bypassed/);
   const roomResponse = await fetch(`${origin}/api/rooms`, { method: 'POST',
     headers: { 'content-type': 'application/json' }, body: JSON.stringify({ quizId: 'quiz-space' }) });
   const room = await roomResponse.json();
@@ -136,7 +136,38 @@ test('live harness creates, joins, reconnects, and starts an auth-free room', ()
   assert.equal(join.participant.nickname, 'Mae');
   assert.ok(join.reconnectToken.length >= 32);
   const active = await fetch(`${origin}/api/rooms/${room.joinCode}/lifecycle`, { method: 'POST',
-    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ status: 'active' }) }).then((response) => response.json());
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ status: 'active', expectedRevision: 0 }) }).then((response) => response.json());
   assert.equal(active.status, 'active');
+  assert.equal(active.revision, 1);
   assert.equal(active.participants.length, 1);
+}));
+
+test('creator dashboard launches only published owned quizzes into the host display', () => withServer(async (origin) => {
+  const creator = await fetch(`${origin}/creator`).then((response) => response.text());
+  const script = await fetch(`${origin}/creator.js`).then((response) => response.text());
+  assert.match(creator, /My quizzes/);
+  assert.match(script, /Host live/);
+  const draft = await fetch(`${origin}/api/rooms`, { method: 'POST',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ quizId: 'quiz-history' }) });
+  assert.equal(draft.status, 409);
+  const launched = await fetch(`${origin}/api/rooms`, { method: 'POST',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ quizId: 'quiz-space' }) });
+  const room = await launched.json();
+  assert.equal(launched.status, 201);
+  assert.equal(room.quizId, 'quiz-space');
+  assert.equal(room.revision, 0);
+  assert.equal('hostId' in room, false);
+  assert.match(await fetch(`${origin}/live?host=${room.joinCode}`).then((response) => response.text()), /Host display/);
+}));
+
+test('host HTTP actions reject stale revisions without double-transitioning', () => withServer(async (origin) => {
+  const room = await fetch(`${origin}/api/rooms`, { method: 'POST',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ quizId: 'quiz-space' }) }).then((response) => response.json());
+  const action = () => fetch(`${origin}/api/rooms/${room.joinCode}/lifecycle`, { method: 'POST',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ status: 'active', expectedRevision: 0 }) });
+  const [first, second] = await Promise.all([action(), action()]);
+  assert.deepEqual([first.status, second.status].sort(), [200, 409]);
+  const current = await fetch(`${origin}/api/rooms/${room.joinCode}`).then((response) => response.json());
+  assert.equal(current.status, 'active');
+  assert.equal(current.revision, 1);
 }));
