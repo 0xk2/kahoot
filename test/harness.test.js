@@ -47,3 +47,28 @@ test('harness reports contract failures as client errors', () => withServer(asyn
   assert.equal(response.status, 400);
   assert.match((await response.json()).error, /answer.sessionId/);
 }));
+
+test('creator harness exposes the auth-free quiz library and editor surface', () => withServer(async (origin) => {
+  const [pageResponse, listResponse] = await Promise.all([
+    fetch(`${origin}/creator`), fetch(`${origin}/api/creator/quizzes?status=draft&sort=title`)
+  ]);
+  const page = await pageResponse.text();
+  const list = await listResponse.json();
+  assert.match(page, /Creator test harness · auth bypassed/);
+  assert.match(page, /Question settings/);
+  assert.deepEqual(list.map((quiz) => quiz.id), ['quiz-history']);
+}));
+
+test('creator harness saves validated multiple-choice settings', () => withServer(async (origin) => {
+  const quiz = await fetch(`${origin}/api/creator/quizzes/quiz-space`).then((response) => response.json());
+  quiz.questions[0].type = 'multiple_choice';
+  quiz.questions[0].options[0].isCorrect = true;
+  quiz.questions[0].points = 2000;
+  quiz.questions[0].timeLimitSeconds = 60;
+  const response = await fetch(`${origin}/api/creator/quizzes/quiz-space`, { method: 'PUT',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify(quiz) });
+  const saved = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(saved.questions[0].type, 'multiple_choice');
+  assert.equal(saved.questions[0].timeLimitSeconds, 60);
+}));

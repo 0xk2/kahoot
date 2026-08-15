@@ -43,6 +43,18 @@ session” to return the creator, and logout to revoke it. Try a duplicate mixed
 password shorter than 12 characters, invalid characters, and a wrong password as edge cases.
 The harness is a development surface, not a production server; restarting it resets all data.
 
+### R1-3 creator harness
+
+Run `npm run harness`, then open <http://127.0.0.1:4173/creator>. Authentication is bypassed only
+for this local surface. The library includes published, draft, and archived mock quizzes. Search,
+filter, sort, switch grid/list display, or create a quiz; open one to edit multiple-choice answers,
+correct selections, points, and timers, then save it to the in-memory store.
+
+Expected result: saved values remain available until the harness restarts and invalid quizzes show
+a contract error. Important edges: every question needs 2–10 answers and at least one correct
+answer; single choice accepts exactly one correct answer; timers are 5–300 seconds; points are
+0–100,000. The editor prevents removing the final question or reducing an answer set below two.
+
 Import all public contracts from the package-local entry point:
 
 ```js

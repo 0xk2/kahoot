@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Quiz studio · creator harness</title>
+  <link rel="stylesheet" href="/creator.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/creator" aria-label="Quiz studio home"><span>Q</span> Quiz studio</a>
+    <div class="harness">Creator test harness · auth bypassed</div>
+    <div class="avatar">AH</div>
+  </header>
+  <main>
+    <section id="library-view">
+      <div class="page-heading"><div><p class="eyebrow">Workspace</p><h1>My quizzes</h1><p>Create, refine, and organize every quiz in one place.</p></div><button class="primary" id="new-quiz">＋ New quiz</button></div>
+      <div class="toolbar" aria-label="Quiz library controls">
+        <label class="search"><span>⌕</span><input id="search" type="search" placeholder="Search quizzes"></label>
+        <label>Status<select id="status"><option value="all">All statuses</option><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></label>
+        <label>Sort<select id="sort"><option value="updated">Recently updated</option><option value="title">Title A–Z</option><option value="questions">Most questions</option></select></label>
+        <div class="view-toggle" aria-label="Display"><button data-view="grid" class="selected" aria-label="Grid view">▦</button><button data-view="list" aria-label="List view">☷</button></div>
+      </div>
+      <p id="library-count" class="count"></p><div id="quiz-list" class="quiz-grid"></div>
+    </section>
+    <section id="editor-view" hidden>
+      <div class="editor-top"><button class="quiet" id="back">← Library</button><span id="save-state">All changes saved</span><button class="primary" id="save">Save quiz</button></div>
+      <form id="editor-form">
+        <div class="title-row"><div><p class="eyebrow">Quiz editor</p><input id="quiz-title" class="title-input" aria-label="Quiz title" maxlength="160"><input id="quiz-description" class="description-input" aria-label="Quiz description" maxlength="1000" placeholder="Add a description"></div><span id="quiz-status" class="badge"></span></div>
+        <div class="editor-layout">
+          <aside><h2>Questions</h2><div id="question-list"></div><button type="button" class="add-question" id="add-question">＋ Add question</button></aside>
+          <div class="canvas">
+            <div class="question-header"><span id="question-number"></span><button type="button" class="danger-link" id="delete-question">Delete question</button></div>
+            <textarea id="prompt" maxlength="500" placeholder="Type your question" required></textarea>
+            <p class="hint">Choose every correct answer. One selected answer creates single choice; multiple selections create multiple choice.</p>
+            <div id="options" class="options"></div><button type="button" class="add-answer" id="add-answer">＋ Add answer</button>
+          </div>
+          <aside class="settings"><h2>Question settings</h2>
+            <label>Time limit<select id="timer"><option value="5">5 seconds</option><option value="10">10 seconds</option><option value="20">20 seconds</option><option value="30">30 seconds</option><option value="60">1 minute</option><option value="90">90 seconds</option><option value="120">2 minutes</option><option value="300">5 minutes</option></select></label>
+            <label>Points<select id="points"><option value="0">No points</option><option value="500">500 points</option><option value="1000">1,000 points</option><option value="1500">1,500 points</option><option value="2000">2,000 points</option></select></label>
+            <div class="setting-summary"><span>Answer type</span><strong id="answer-type"></strong></div>
+          </aside>
+        </div>
+      </form>
+    </section>
+    <div id="toast" role="status" aria-live="polite"></div>
+  </main>
+  <script type="module" src="/creator.js"></script>
+</body>
+</html>
