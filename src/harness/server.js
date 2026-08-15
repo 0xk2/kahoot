@@ -71,7 +71,11 @@ export async function createHarnessServer({ clock } = {}) {
         return json(response, 200, game.answer(await readJson(request)));
       }
       if (request.method === 'POST' && request.url === '/api/player/harness/advance') {
-        game.advance(); return json(response, 200, { advanced: true });
+        const input = await readJson(request);
+        return json(response, 200, game.advance(input.participantId));
+      }
+      if (request.method === 'POST' && request.url === '/api/player/harness/mode') {
+        return json(response, 200, game.setMode((await readJson(request)).mode));
       }
       if (request.method === 'POST' && request.url === '/api/player/harness/reset') {
         game.reset(); return json(response, 200, { reset: true });
