@@ -93,6 +93,21 @@ test('player harness supports direct anonymous join and question retrieval', () 
   assert.equal(result.totalScore > 0, true);
 }));
 
+test('player harness exposes scoring mode and representative rivals', () => withServer(async (origin) => {
+  await fetch(`${origin}/api/player/harness/reset`, { method: 'POST',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ scoringMode: 'fixed' }) });
+  const joined = await fetch(`${origin}/api/player/join`, { method: 'POST',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ joinCode: 'ORBIT1',
+      nickname: 'Reviewer', reconnectToken: null }) }).then((response) => response.json());
+  const rivals = await fetch(`${origin}/api/player/harness/rivals`, { method: 'POST',
+    headers: { 'content-type': 'application/json' }, body: '{}' }).then((response) => response.json());
+  assert.equal(rivals.leaderboard.length, 4);
+  const state = await fetch(`${origin}/api/player/state?participantId=${joined.participantId}`)
+    .then((response) => response.json());
+  assert.equal(state.scoringMode, 'fixed');
+  assert.equal(state.leaderboard, null);
+}));
+
 test('progression harness switches to independent player pacing', () => withServer(async (origin) => {
   const modeResponse = await fetch(`${origin}/api/player/harness/mode`, { method: 'POST',
     headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mode: 'player' }) });

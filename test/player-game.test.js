@@ -45,6 +45,26 @@ test('multiple choice requires the complete correct set', () => {
   assert.equal(game.state(player.participantId).phase, 'completed');
 });
 
+test('fixed scoring, answer reveals, and live/final leaderboards are exposed', () => {
+  const game = createPlayerGame({ quiz, session, clock, scoringMode: 'fixed' });
+  const slow = game.join({ joinCode: 'ORBIT1', nickname: 'Slow', reconnectToken: null });
+  const wrong = game.join({ joinCode: 'ORBIT1', nickname: 'Wrong', reconnectToken: null });
+  game.answer({ sessionId: session.id, participantId: slow.participantId,
+    questionId: 'q-mars', optionIds: ['opt-mars'], responseTimeMs: 20000 });
+  game.answer({ sessionId: session.id, participantId: wrong.participantId,
+    questionId: 'q-mars', optionIds: ['opt-venus'], responseTimeMs: 1 });
+  const feedback = game.state(slow.participantId);
+  assert.equal(feedback.result.pointsAwarded, 1000);
+  assert.deepEqual(feedback.result.reveal.find(({ id }) => id === 'opt-mars'),
+    { id: 'opt-mars', text: 'Mars', isCorrect: true, isSelected: true });
+  assert.deepEqual(feedback.leaderboard.map(({ nickname, rank }) => [nickname, rank]),
+    [['Slow', 1], ['Wrong', 2]]);
+  game.advance(); game.advance();
+  const completed = game.state(slow.participantId);
+  assert.equal(completed.phase, 'completed');
+  assert.deepEqual(completed.leaderboard, feedback.leaderboard);
+});
+
 test('question deadlines stay fixed and expired answers receive zero points', () => {
   let now = new Date('2026-08-15T10:00:00.000Z');
   const game = createPlayerGame({ quiz, session, clock: () => now });

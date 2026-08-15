@@ -83,6 +83,20 @@ feedback and points, and the final screen shows the accumulated score. Important
 PIN, a blank or case-insensitive duplicate nickname, selecting multiple answers on a single-choice
 question, refreshing after joining, and attempting to submit twice.
 
+### R1-7 scoring and leaderboard harness
+
+Run `HOST=$(tailscale ip -4) npm run harness`, then open
+<http://sontra.tailc1c4f8.ts.net:4173/play>. Authentication is bypassed only on this local player
+surface. Choose fixed or speed-weighted scoring before joining PIN `ORBIT1`. Answer a question,
+then select “Add mock rival answers” to populate the live leaderboard with fast, slow, and wrong
+representative answers. Advance through both questions to see the final leaderboard.
+
+Expected result: fixed scoring awards all configured points for any correct answer; speed-weighted
+scoring awards 50–100% according to elapsed time. Feedback identifies every correct option, marks
+an incorrect selected option, shows the explanation, and ranks tied scores equally. Important
+edges: wrong and partially correct answers earn zero, late answers receive the 50% floor, duplicate
+submissions remain rejected, tied players share a rank, and the final ranking remains available.
+
 ### R1-6 timed progression harness
 
 Run `HOST=$(tailscale ip -4) npm run harness`, then open

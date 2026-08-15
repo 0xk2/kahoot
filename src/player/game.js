@@ -1,12 +1,16 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { parseJoinSessionInput, parseSubmitAnswerInput } from '../contracts/index.js';
+import { calculatePoints, rankPlayers, SCORING_MODES } from './scoring.js';
 
 const MODES = new Set(['host', 'player']);
 
-export function createPlayerGame({ quiz, session, clock = () => new Date(), mode = 'host' }) {
+export function createPlayerGame({ quiz, session, clock = () => new Date(), mode = 'host',
+  scoringMode = 'speed_weighted' }) {
   if (!MODES.has(mode)) throw new TypeError('mode must be host or player');
+  if (!SCORING_MODES.includes(scoringMode)) throw new TypeError(`Unknown scoring mode: ${scoringMode}`);
   let progressionMode = mode;
   let hostIndex = 0;
+  let joinOrder = 0;
   let hostQuestionStartedAt = clock().getTime();
   const players = new Map();
   const tokens = new Map();
@@ -24,7 +28,7 @@ export function createPlayerGame({ quiz, session, clock = () => new Date(), mode
       throw new PlayerGameError('That nickname is already taken', 409);
     }
     const player = { id: randomUUID(), nickname, score: 0, answers: new Map(), questionIndex: 0,
-      questionStartedAt: clock().getTime() };
+      questionStartedAt: clock().getTime(), joinOrder: joinOrder++ };
     const reconnectToken = randomBytes(24).toString('base64url');
     players.set(player.id, player); tokens.set(reconnectToken, player.id);
     return joined(player, reconnectToken);
@@ -34,14 +38,14 @@ export function createPlayerGame({ quiz, session, clock = () => new Date(), mode
     const player = requirePlayer(playerId);
     const index = currentIndex(player);
     const question = quiz.questions[index];
-    if (!question) return { phase: 'completed', mode: progressionMode,
-      player: publicPlayer(player), totalQuestions: quiz.questions.length };
+    if (!question) return { phase: 'completed', mode: progressionMode, scoringMode,
+      player: publicPlayer(player), totalQuestions: quiz.questions.length, leaderboard: leaderboard() };
     expire(player, question);
     const prior = player.answers.get(question.id);
     return { phase: prior ? 'feedback' : session.status === 'lobby' ? 'lobby' : 'question',
-      mode: progressionMode, canAdvance: progressionMode === 'player' && Boolean(prior),
+      mode: progressionMode, scoringMode, canAdvance: progressionMode === 'player' && Boolean(prior),
       player: publicPlayer(player), question: publicQuestion(question, index, startedAt(player)),
-      result: prior?.result ?? null };
+      result: prior?.result ?? null, leaderboard: prior ? leaderboard() : null };
   }
 
   function answer(value) {
@@ -86,7 +90,7 @@ export function createPlayerGame({ quiz, session, clock = () => new Date(), mode
     progressionMode = nextMode; resetProgress();
     return { mode: progressionMode };
   }
-  function reset() { resetProgress(); players.clear(); tokens.clear(); }
+  function reset() { resetProgress(); players.clear(); tokens.clear(); joinOrder = 0; }
   function resetProgress() {
     hostIndex = 0; hostQuestionStartedAt = clock().getTime();
     for (const player of players.values()) {
@@ -95,19 +99,24 @@ export function createPlayerGame({ quiz, session, clock = () => new Date(), mode
   }
   function expire(player, question, force = false) {
     if (player.answers.has(question.id)) return;
-    if (force || clock().getTime() >= startedAt(player) + question.timeLimitSeconds * 1000) record(player, question, [], question.timeLimitSeconds * 1000, true);
+    if (force || clock().getTime() >= startedAt(player) + question.timeLimitSeconds * 1000) {
+      record(player, question, [], question.timeLimitSeconds * 1000, true);
+    }
   }
   function record(player, question, optionIds, responseTimeMs, timedOut) {
     const selected = new Set(optionIds);
     const correctIds = question.options.filter((option) => option.isCorrect).map((option) => option.id);
     const isCorrect = !timedOut && selected.size === correctIds.length && correctIds.every((id) => selected.has(id));
-    const speed = Math.max(0, 1 - responseTimeMs / (question.timeLimitSeconds * 1000));
-    const pointsAwarded = isCorrect ? Math.round(question.points * (0.5 + speed * 0.5)) : 0;
+    const pointsAwarded = calculatePoints({ isCorrect, points: question.points,
+      responseTimeMs, timeLimitSeconds: question.timeLimitSeconds, mode: scoringMode });
     player.score += pointsAwarded;
     const result = { isCorrect, timedOut, pointsAwarded, correctOptionIds: correctIds,
-      explanation: question.explanation, totalScore: player.score };
+      explanation: question.explanation, totalScore: player.score, selectedOptionIds: optionIds,
+      reveal: question.options.map(({ id, text, isCorrect: correct }) =>
+        ({ id, text, isCorrect: correct, isSelected: selected.has(id) })) };
     player.answers.set(question.id, { optionIds, result }); return result;
   }
+  function leaderboard() { return rankPlayers(players.values()); }
   function currentIndex(player) { return progressionMode === 'host' ? hostIndex : player.questionIndex; }
   function startedAt(player) { return progressionMode === 'host' ? hostQuestionStartedAt : player.questionStartedAt; }
   function publicQuestion(question, index, start) {
@@ -119,7 +128,7 @@ export function createPlayerGame({ quiz, session, clock = () => new Date(), mode
   function joined(player, reconnectToken) { return { sessionId: session.id, participantId: player.id, nickname: player.nickname, reconnectToken }; }
   function requirePlayer(id) { const player = players.get(id); if (!player) throw new PlayerGameError('Player not found', 404); return player; }
   function publicPlayer(player) { return { id: player.id, nickname: player.nickname, score: player.score }; }
-  return { join, state, answer, advance, setMode, reset };
+  return { join, state, answer, advance, setMode, reset, leaderboard };
 }
 
 export class PlayerGameError extends Error {
