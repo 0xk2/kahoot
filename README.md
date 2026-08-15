@@ -97,6 +97,18 @@ an incorrect selected option, shows the explanation, and ranks tied scores equal
 edges: wrong and partially correct answers earn zero, late answers receive the 50% floor, duplicate
 submissions remain rejected, tied players share a rank, and the final ranking remains available.
 
+### R1-6 timed progression harness
+
+Run `HOST=$(tailscale ip -4) npm run harness`, then open
+<http://sontra.tailc1c4f8.ts.net:4173/play>. Use “Host-paced demo” to give every joined player the
+same timed question and let the host-style Advance control move everyone together. Use
+“Player-paced demo” to let each player advance independently after answering or timing out.
+
+Expected result: the countdown has a stable server deadline, answers are rejected after it expires,
+and a timeout produces zero-point feedback. Player-paced participants cannot advance before
+answering or expiry. Refreshing preserves the same deadline. Switching mode or resetting
+intentionally clears scores and progress.
+
 Import all public contracts from the package-local entry point:
 
 ```js

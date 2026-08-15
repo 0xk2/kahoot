@@ -31,7 +31,8 @@ export async function createHarnessServer({ clock } = {}) {
   const store = createCreatorStore(creatorQuizzes, clock);
   const gameOptions = { quiz, session, ...(clock ? { clock } : {}) };
   let scoringMode = 'speed_weighted';
-  let game = createPlayerGame({ ...gameOptions, scoringMode });
+  let progressionMode = 'host';
+  let game = createPlayerGame({ ...gameOptions, scoringMode, mode: progressionMode });
   let rivals = [];
   const database = new DatabaseSync(':memory:');
   await applySchema(database);
@@ -74,7 +75,14 @@ export async function createHarnessServer({ clock } = {}) {
         return json(response, 200, game.answer(await readJson(request)));
       }
       if (request.method === 'POST' && request.url === '/api/player/harness/advance') {
-        game.advance(); return json(response, 200, { advanced: true });
+        const input = await readJson(request);
+        return json(response, 200, game.advance(input.participantId));
+      }
+      if (request.method === 'POST' && request.url === '/api/player/harness/mode') {
+        const nextMode = (await readJson(request)).mode;
+        const result = game.setMode(nextMode);
+        progressionMode = nextMode;
+        return json(response, 200, result);
       }
       if (request.method === 'POST' && request.url === '/api/player/harness/rivals') {
         const active = rivals.map((rival) => ({ rival, state: game.state(rival.participantId) }))
@@ -97,7 +105,7 @@ export async function createHarnessServer({ clock } = {}) {
       if (request.method === 'POST' && request.url === '/api/player/harness/reset') {
         const input = await readJson(request);
         scoringMode = input.scoringMode || scoringMode;
-        game = createPlayerGame({ ...gameOptions, scoringMode });
+        game = createPlayerGame({ ...gameOptions, scoringMode, mode: progressionMode });
         rivals = [];
         return json(response, 200, { reset: true, scoringMode });
       }

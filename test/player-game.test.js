@@ -64,3 +64,39 @@ test('fixed scoring, answer reveals, and live/final leaderboards are exposed', (
   assert.equal(completed.phase, 'completed');
   assert.deepEqual(completed.leaderboard, feedback.leaderboard);
 });
+
+test('question deadlines stay fixed and expired answers receive zero points', () => {
+  let now = new Date('2026-08-15T10:00:00.000Z');
+  const game = createPlayerGame({ quiz, session, clock: () => now });
+  const player = game.join({ joinCode: 'ORBIT1', nickname: 'Timer', reconnectToken: null });
+  const deadline = game.state(player.participantId).question.closesAt;
+  now = new Date('2026-08-15T10:00:21.000Z');
+  const state = game.state(player.participantId);
+  assert.equal(state.question.closesAt, deadline);
+  assert.equal(state.phase, 'feedback');
+  assert.equal(state.result.timedOut, true);
+  assert.equal(state.result.pointsAwarded, 0);
+  assert.throws(() => game.answer({ sessionId: session.id, participantId: player.participantId,
+    questionId: 'q-mars', optionIds: ['opt-mars'], responseTimeMs: 1000 }), /expired/);
+});
+
+test('host-paced progression moves all players together', () => {
+  const game = createGame();
+  const ada = game.join({ joinCode: 'ORBIT1', nickname: 'Ada', reconnectToken: null });
+  const lin = game.join({ joinCode: 'ORBIT1', nickname: 'Lin', reconnectToken: null });
+  game.advance();
+  assert.equal(game.state(ada.participantId).question.questionId, 'q-moons');
+  assert.equal(game.state(lin.participantId).question.questionId, 'q-moons');
+});
+
+test('player-paced progression requires feedback and advances independently', () => {
+  const game = createPlayerGame({ quiz, session, clock, mode: 'player' });
+  const ada = game.join({ joinCode: 'ORBIT1', nickname: 'Ada', reconnectToken: null });
+  const lin = game.join({ joinCode: 'ORBIT1', nickname: 'Lin', reconnectToken: null });
+  assert.throws(() => game.advance(ada.participantId), /Answer or wait/);
+  game.answer({ sessionId: session.id, participantId: ada.participantId,
+    questionId: 'q-mars', optionIds: ['opt-mars'], responseTimeMs: 1000 });
+  game.advance(ada.participantId);
+  assert.equal(game.state(ada.participantId).question.questionId, 'q-moons');
+  assert.equal(game.state(lin.participantId).question.questionId, 'q-mars');
+});
