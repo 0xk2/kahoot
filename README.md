@@ -70,6 +70,19 @@ room ends are rejected. The QR image is provided by `api.qrserver.com`, so its p
 access; the adjacent join link always remains available. For tailnet testing, use
 `HOST=$(tailscale ip -4) npm run harness` and open <http://sontra.tailc1c4f8.ts.net:4173/live>.
 
+### R1-5 player harness
+
+Run `HOST=$(tailscale ip -4) npm run harness`, then open
+<http://sontra.tailc1c4f8.ts.net:4173/play>. The direct player surface needs no account. Join the
+representative live space quiz with PIN `ORBIT1` and any nickname, answer its single- and
+multiple-choice questions, then use “Harness: next question” to advance through feedback to the
+final score. “Reset demo” clears players and progress.
+
+Expected result: the layout works at phone and desktop widths, a submitted answer locks and shows
+feedback and points, and the final screen shows the accumulated score. Important edges: a wrong
+PIN, a blank or case-insensitive duplicate nickname, selecting multiple answers on a single-choice
+question, refreshing after joining, and attempting to submit twice.
+
 Import all public contracts from the package-local entry point:
 
 ```js

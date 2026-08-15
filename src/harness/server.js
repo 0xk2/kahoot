@@ -2,8 +2,9 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
-import { harnessState } from './mock-data.js';
+import { harnessState, quiz, session } from './mock-data.js';
 import { ContractError, parseSubmitAnswerInput } from '../contracts/index.js';
+import { createPlayerGame, PlayerGameError } from '../player/game.js';
 import { creatorQuizzes } from './creator-data.js';
 import { createCreatorStore } from '../creator/store.js';
 import { applySchema } from '../db/schema.js';
@@ -17,6 +18,9 @@ const pageUrl = new URL('../../public/harness.html', import.meta.url);
 const creatorPageUrl = new URL('../../public/creator.html', import.meta.url);
 const creatorScriptUrl = new URL('../../public/creator.js', import.meta.url);
 const creatorStyleUrl = new URL('../../public/creator.css', import.meta.url);
+const playerPageUrl = new URL('../../public/player.html', import.meta.url);
+const playerScriptUrl = new URL('../../public/player.js', import.meta.url);
+const playerStyleUrl = new URL('../../public/player.css', import.meta.url);
 const liveAssets = new Map([
   ['/live', ['../../public/live.html', 'text/html; charset=utf-8']],
   ['/live.js', ['../../public/live.js', 'text/javascript; charset=utf-8']],
@@ -25,6 +29,7 @@ const liveAssets = new Map([
 
 export async function createHarnessServer({ clock } = {}) {
   const store = createCreatorStore(creatorQuizzes, clock);
+  const game = createPlayerGame({ quiz, session, ...(clock ? { clock } : {}) });
   const database = new DatabaseSync(':memory:');
   await applySchema(database);
   const service = new AuthService(new AuthRepository(database));
@@ -45,6 +50,31 @@ export async function createHarnessServer({ clock } = {}) {
       }
       if (request.method === 'GET' && request.url === '/api/state') {
         return json(response, 200, harnessState());
+      }
+      if (request.method === 'GET' && request.url === '/play') {
+        return send(response, 200, await readFile(playerPageUrl, 'utf8'), 'text/html; charset=utf-8');
+      }
+      if (request.method === 'GET' && request.url === '/player.js') {
+        return send(response, 200, await readFile(playerScriptUrl, 'utf8'), 'text/javascript; charset=utf-8');
+      }
+      if (request.method === 'GET' && request.url === '/player.css') {
+        return send(response, 200, await readFile(playerStyleUrl, 'utf8'), 'text/css; charset=utf-8');
+      }
+      if (request.method === 'POST' && request.url === '/api/player/join') {
+        return json(response, 201, game.join(await readJson(request)));
+      }
+      if (request.method === 'GET' && request.url.startsWith('/api/player/state?')) {
+        const url = new URL(request.url, 'http://localhost');
+        return json(response, 200, game.state(url.searchParams.get('participantId')));
+      }
+      if (request.method === 'POST' && request.url === '/api/player/answer') {
+        return json(response, 200, game.answer(await readJson(request)));
+      }
+      if (request.method === 'POST' && request.url === '/api/player/harness/advance') {
+        game.advance(); return json(response, 200, { advanced: true });
+      }
+      if (request.method === 'POST' && request.url === '/api/player/harness/reset') {
+        game.reset(); return json(response, 200, { reset: true });
       }
       if (request.method === 'GET' && request.url === '/creator') {
         return send(response, 200, await readFile(creatorPageUrl, 'utf8'), 'text/html; charset=utf-8');
@@ -77,8 +107,8 @@ export async function createHarnessServer({ clock } = {}) {
       }
       return json(response, 404, { error: 'Not found' });
     } catch (error) {
-      if (error instanceof ContractError || error instanceof SyntaxError || error instanceof TypeError) {
-        return json(response, 400, { valid: false, error: error.message });
+      if (error instanceof ContractError || error instanceof SyntaxError || error instanceof TypeError || error instanceof PlayerGameError) {
+        return json(response, error.status || 400, { valid: false, error: error.message });
       }
       return json(response, 500, { error: 'Internal server error' });
     }
