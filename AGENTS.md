@@ -22,6 +22,9 @@ Edit it as the project evolves; instructions closest to the code take precedence
 - Build a feature-specific human test surface with representative mock data.
 - Bypass unrelated authentication only inside the explicit local test harness.
 - Document the test command, URL, expected result, and important edge cases.
+- When a human test surface is requested, bind it to this machine's Tailscale IPv4 address with
+  `HOST=$(tailscale ip -4) npm run harness` and report the clickable MagicDNS URL using the port
+  from the harness (currently `http://sontra.tailc1c4f8.ts.net:4173`). Do not bind to `0.0.0.0`.
 
 ## Production guard
 
