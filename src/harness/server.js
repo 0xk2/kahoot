@@ -39,7 +39,10 @@ export async function createHarnessServer({ clock } = {}) {
   const service = new AuthService(new AuthRepository(database));
   await service.register({ username: 'demo_creator', password: 'correct horse battery staple', displayName: 'Demo Creator' });
   const handleAuth = createAuthHandler(service);
-  const handleRoom = createRoomHandler(new RoomService({ clock: clock ? () => new Date(clock()) : undefined }));
+  const handleRoom = createRoomHandler(new RoomService({ clock: clock ? () => new Date(clock()) : undefined }), {
+    authenticate: () => ({ id: 'user-host', displayName: 'Demo Creator' }),
+    findQuiz: (id) => store.get(id)
+  });
   return createServer(async (request, response) => {
     try {
       if (await handleAuth(request, response)) return;

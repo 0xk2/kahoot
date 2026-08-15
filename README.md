@@ -109,6 +109,21 @@ and a timeout produces zero-point feedback. Player-paced participants cannot adv
 answering or expiry. Refreshing preserves the same deadline. Switching mode or resetting
 intentionally clears scores and progress.
 
+### R1-8 integrated creator-to-host harness
+
+Run `HOST=$(tailscale ip -4) npm run harness`, then open
+<http://sontra.tailc1c4f8.ts.net:4173/creator>. Authentication is bypassed only by this local
+harness, which supplies the representative `Demo Creator` identity to the normal room authorization
+boundary. Select **Host live** on the published “A Tiny Tour of Space” quiz to open its host display,
+then join from the displayed link in another tab and start, complete, or cancel the room.
+
+Expected result: only a published quiz can launch, the host display keeps its PIN and player list
+current, and lifecycle/player-removal actions are accepted only for the owning creator at the latest
+room revision. Important edges: drafts and archived quizzes cannot launch; a stale simultaneous host
+action is rejected and refreshed rather than applied twice; public room responses do not expose the
+creator identifier; joins remain anonymous and do not grant host controls. Restarting the harness
+resets its isolated in-memory data.
+
 Import all public contracts from the package-local entry point:
 
 ```js

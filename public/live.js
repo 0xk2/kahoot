@@ -36,6 +36,7 @@ async function join(joinCode, nickname, reconnectToken) {
 }
 
 function renderHost(room) {
+  sessionStorage.setItem(`host:${room.joinCode}`, String(room.revision));
   $('#host-pin').textContent = room.joinCode; $('#join-link').textContent = room.joinUrl;
   $('#join-link').href = room.joinUrl; $('#qr').src = room.qrImageUrl;
   $('#host-status').textContent = statusText(room); $('#count').textContent = `${active(room).length}/${room.maxPlayers}`;
@@ -64,8 +65,9 @@ async function poll() {
   timer = setTimeout(poll, 1000);
 }
 
-async function transition(status) { try { renderHost(await request(`/api/rooms/${pin}/lifecycle`, json('POST', { status }))); } catch (error) { message(error); } }
-async function remove(id) { try { renderHost(await request(`/api/rooms/${pin}/participants/${id}`, { method: 'DELETE' })); } catch (error) { message(error); } }
+function revision() { return Number(sessionStorage.getItem(`host:${pin}`)); }
+async function transition(status) { try { renderHost(await request(`/api/rooms/${pin}/lifecycle`, json('POST', { status, expectedRevision: revision() }))); } catch (error) { message(error); poll(); } }
+async function remove(id) { try { renderHost(await request(`/api/rooms/${pin}/participants/${id}`, { method: 'DELETE', headers: { 'if-match': String(revision()) } })); } catch (error) { message(error); poll(); } }
 $('#start').onclick = () => transition('active'); $('#complete').onclick = () => transition('completed'); $('#cancel').onclick = () => transition('cancelled');
 $('#disconnect').onclick = async () => {
   try {
@@ -83,3 +85,7 @@ function escapeHtml(value) { const node = document.createElement('span'); node.t
 
 const queryPin = new URLSearchParams(location.search).get('pin');
 if (queryPin) { $('#pin').value = queryPin.toUpperCase(); const state = saved(queryPin.toUpperCase()); if (state) join(queryPin, state.nickname, state.token).catch(message); }
+const hostPin = new URLSearchParams(location.search).get('host');
+if (hostPin && sessionStorage.getItem(`host:${hostPin.toUpperCase()}`) !== null) {
+  role = 'host'; pin = hostPin.toUpperCase(); show('#host'); poll();
+}

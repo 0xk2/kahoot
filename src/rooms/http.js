@@ -1,13 +1,19 @@
 import { ContractError } from '../contracts/index.js';
 import { RoomError } from './errors.js';
 
-export function createRoomHandler(service) {
+export function createRoomHandler(service, { authenticate, findQuiz } = {}) {
   return async function handle(request, response) {
     const url = new URL(request.url, 'http://localhost');
     try {
       if (request.method === 'POST' && url.pathname === '/api/rooms') {
+        const host = authenticate?.(request);
+        if (!host) throw new RoomError('Authentication required', 401);
+        const input = await readJson(request);
+        const quiz = findQuiz?.(input.quizId);
+        if (!quiz || quiz.ownerId !== host.id) throw new RoomError('Quiz not found', 404);
+        if (quiz.status !== 'published') throw new RoomError('Only published quizzes can be hosted', 409);
         const origin = `http://${request.headers.host}`;
-        return json(response, 201, service.create(await readJson(request), 'user-host', origin));
+        return json(response, 201, service.create(input, host.id, origin));
       }
       if (request.method === 'POST' && url.pathname === '/api/rooms/join') {
         return json(response, 200, service.join(await readJson(request)));
@@ -17,13 +23,17 @@ export function createRoomHandler(service) {
       const [, pin, action] = match;
       if (request.method === 'GET' && !action) return json(response, 200, service.get(pin));
       if (request.method === 'POST' && action === 'lifecycle') {
-        return json(response, 200, service.transition(pin, (await readJson(request)).status));
+        const host = authenticate?.(request);
+        const input = await readJson(request);
+        return json(response, 200, service.transition(pin, input.status, host?.id, input.expectedRevision));
       }
       if (request.method === 'POST' && action === 'disconnect') {
         return json(response, 200, service.disconnect(pin, (await readJson(request)).reconnectToken));
       }
       if (request.method === 'DELETE' && action?.startsWith('participants/')) {
-        return json(response, 200, service.remove(pin, action.split('/')[1]));
+        const host = authenticate?.(request);
+        return json(response, 200, service.remove(pin, action.split('/')[1], host?.id,
+          Number(request.headers['if-match'])));
       }
       return false;
     } catch (error) {

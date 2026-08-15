@@ -18,7 +18,7 @@ export class RoomService {
     const { quizId } = parseCreateSessionInput(value);
     const joinCode = this.#uniquePin();
     const createdAt = this.clock().toISOString();
-    const room = { id: randomUUID(), quizId, hostId, joinCode, origin, status: 'lobby',
+    const room = { id: randomUUID(), quizId, hostId, joinCode, origin, status: 'lobby', revision: 0,
       currentQuestionIndex: null, createdAt, startedAt: null, endedAt: null, participants: new Map() };
     this.rooms.set(joinCode, room);
     return this.snapshot(room);
@@ -49,21 +49,25 @@ export class RoomService {
     return { room: this.snapshot(room), participant: publicParticipant(participant) };
   }
 
-  remove(joinCode, participantId) {
+  remove(joinCode, participantId, hostId, expectedRevision) {
     const room = this.#room(joinCode);
+    this.#authorizeHost(room, hostId, expectedRevision);
     const participant = room.participants.get(participantId);
     if (!participant) throw new RoomError('Player not found', 404);
     participant.status = 'removed';
+    room.revision += 1;
     return this.snapshot(room);
   }
 
-  transition(joinCode, status) {
+  transition(joinCode, status, hostId, expectedRevision) {
     const room = this.#room(joinCode);
+    this.#authorizeHost(room, hostId, expectedRevision);
     if (!TRANSITIONS[room.status]?.includes(status)) throw new RoomError(`Cannot change ${room.status} room to ${status}`, 409);
     room.status = status;
     const timestamp = this.clock().toISOString();
     if (status === 'active') { room.startedAt = timestamp; room.currentQuestionIndex = 0; }
     if (status === 'completed' || status === 'cancelled') room.endedAt = timestamp;
+    room.revision += 1;
     return this.snapshot(room);
   }
 
@@ -71,7 +75,7 @@ export class RoomService {
 
   snapshot(room) {
     const joinUrl = `${room.origin}/live?pin=${room.joinCode}`;
-    return Object.freeze({ id: room.id, quizId: room.quizId, hostId: room.hostId, joinCode: room.joinCode,
+    return Object.freeze({ id: room.id, quizId: room.quizId, joinCode: room.joinCode, revision: room.revision,
       status: room.status, currentQuestionIndex: room.currentQuestionIndex, createdAt: room.createdAt,
       startedAt: room.startedAt, endedAt: room.endedAt, maxPlayers: this.maxPlayers, joinUrl,
       qrImageUrl: `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(joinUrl)}`,
@@ -97,6 +101,12 @@ export class RoomService {
     const room = this.rooms.get(String(joinCode).toUpperCase());
     if (!room) throw new RoomError('Room not found', 404);
     return room;
+  }
+
+  #authorizeHost(room, hostId, expectedRevision) {
+    if (!hostId || room.hostId !== hostId) throw new RoomError('Host authorization required', 403);
+    if (!Number.isInteger(expectedRevision)) throw new RoomError('Room revision is required', 400);
+    if (room.revision !== expectedRevision) throw new RoomError('Room changed; refresh and try again', 409);
   }
 
   #uniquePin() {

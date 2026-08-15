@@ -17,10 +17,20 @@ async function loadLibrary() {
   const quizzes = await request(`/api/creator/quizzes?${params}`);
   $('#library-count').textContent = `${quizzes.length} ${quizzes.length === 1 ? 'quiz' : 'quizzes'}`;
   $('#quiz-list').className = `quiz-grid ${display === 'list' ? 'list' : ''}`;
-  $('#quiz-list').innerHTML = quizzes.length ? quizzes.map((item) => `<button class="quiz-card" data-id="${item.id}">
+  $('#quiz-list').innerHTML = quizzes.length ? quizzes.map((item) => `<article class="quiz-card" data-id="${item.id}" tabindex="0">
     <div class="cover">✦</div><div class="card-body"><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description ?? 'No description yet')}</p>
-    <div class="meta"><span>${item.questionCount} questions · ${item.totalPoints.toLocaleString()} pts</span><span class="badge">${item.status}</span></div></div></button>`).join('') : '<p>No quizzes match these filters.</p>';
-  document.querySelectorAll('.quiz-card').forEach((card) => card.addEventListener('click', () => openEditor(card.dataset.id)));
+    <div class="meta"><span>${item.questionCount} questions · ${item.totalPoints.toLocaleString()} pts</span><span class="badge">${item.status}</span></div>
+    <div class="card-actions"><button data-edit="${item.id}">Edit</button>${item.status === 'published' ? `<button class="primary" data-host="${item.id}">Host live</button>` : ''}</div></div></article>`).join('') : '<p>No quizzes match these filters.</p>';
+  document.querySelectorAll('[data-edit]').forEach((button) => button.addEventListener('click', () => openEditor(button.dataset.edit)));
+  document.querySelectorAll('[data-host]').forEach((button) => button.addEventListener('click', () => hostQuiz(button.dataset.host)));
+}
+
+async function hostQuiz(quizId) {
+  try {
+    const room = await request('/api/rooms', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ quizId }) });
+    sessionStorage.setItem(`host:${room.joinCode}`, String(room.revision));
+    location.href = `/live?host=${room.joinCode}`;
+  } catch (error) { toast(error.message); }
 }
 
 async function openEditor(id) {
