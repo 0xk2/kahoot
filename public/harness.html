@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Kahoot contract harness</title>
+  <style>
+    :root { color-scheme: dark; font: 16px system-ui; background: #111827; color: #f9fafb; }
+    body { max-width: 860px; margin: 3rem auto; padding: 0 1rem; }
+    .card { background: #1f2937; border: 1px solid #374151; border-radius: 12px; padding: 1.25rem; margin: 1rem 0; }
+    button { background: #7c3aed; color: white; border: 0; border-radius: 8px; padding: .7rem 1rem; cursor: pointer; }
+    label { display: block; padding: .35rem; } pre { white-space: pre-wrap; color: #a7f3d0; }
+  </style>
+</head>
+<body>
+  <h1>Kahoot contract harness</h1>
+  <p>Direct development surface—no account or authentication required.</p>
+  <section class="card" id="summary">Loading representative state…</section>
+  <form class="card" id="answer-form">
+    <h2 id="prompt">Question</h2>
+    <div id="options"></div>
+    <button>Validate answer contract</button>
+  </form>
+  <section class="card"><strong>API response</strong><pre id="result">Choose an answer.</pre></section>
+  <script type="module">
+    const state = await fetch('/api/state').then((response) => response.json());
+    const question = state.currentQuestion;
+    document.querySelector('#summary').textContent = `${state.quiz.title} · code ${state.session.joinCode} · ${state.participants.length} players`;
+    document.querySelector('#prompt').textContent = question.prompt;
+    document.querySelector('#options').innerHTML = question.options.map((option) =>
+      `<label><input type="checkbox" name="option" value="${option.id}"> ${option.text}</label>`).join('');
+    document.querySelector('#answer-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const optionIds = [...document.querySelectorAll('[name=option]:checked')].map((input) => input.value);
+      const response = await fetch('/api/answers/validate', { method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sessionId: state.session.id, participantId: state.participants[0].id,
+          questionId: question.questionId, optionIds, responseTimeMs: 4200 }) });
+      document.querySelector('#result').textContent = JSON.stringify(await response.json(), null, 2);
+    });
+  </script>
+</body>
+</html>

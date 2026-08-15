@@ -1,0 +1,14 @@
+{
+  "name": "kahoot-contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "npm run test",
+    "test": "node --test",
+    "harness": "node src/harness/server.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
