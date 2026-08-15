@@ -129,3 +129,16 @@ Import all public contracts from the package-local entry point:
 ```js
 import { parseQuiz, parseSubmitAnswerInput } from './src/contracts/index.js';
 ```
+
+### R2-1 mobile layout harness
+
+Run `HOST=$(tailscale ip -4) npm run harness`, then open
+<http://sontra.tailc1c4f8.ts.net:4173/mobile>. This direct review hub bypasses unrelated
+authentication and links to the interactive creator, host, and player surfaces with representative
+mock quizzes and gameplay. Test at 320–430 px wide in both portrait and landscape.
+
+Expected result: pages do not scroll horizontally; controls remain reachable and comfortably
+tappable; long titles, answers, nicknames, and room details stay contained; and bottom controls
+respect device safe areas. Important edges: open the creator question editor, create a host room and
+add several players, complete both single- and multiple-choice player questions, rotate a
+short-height phone, and enable large browser text.

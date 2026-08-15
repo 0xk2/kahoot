@@ -29,6 +29,31 @@ test('harness provides the creator account test surface', () => withServer(async
   assert.match(page, /demo_creator/);
 }));
 
+test('mobile review harness links all auth-free interactive surfaces', () => withServer(async (origin) => {
+  const [pageResponse, styleResponse] = await Promise.all([
+    fetch(`${origin}/mobile`), fetch(`${origin}/mobile.css`)
+  ]);
+  const page = await pageResponse.text();
+  const style = await styleResponse.text();
+  assert.equal(pageResponse.status, 200);
+  assert.equal(styleResponse.status, 200);
+  assert.match(page, /R2-1 test harness/);
+  assert.match(page, /href="\/creator"/);
+  assert.match(page, /href="\/live"/);
+  assert.match(page, /href="\/play"/);
+  assert.match(style, /max-width:720px/);
+}));
+
+test('product surfaces include narrow and safe-area mobile rules', () => withServer(async (origin) => {
+  const styles = await Promise.all(['/creator.css', '/live.css', '/player.css']
+    .map((path) => fetch(origin + path).then((response) => response.text())));
+  assert.match(styles[0], /max-width:600px/);
+  assert.match(styles[0], /overflow-x:auto/);
+  assert.match(styles[1], /max-width:650px/);
+  assert.match(styles[2], /safe-area-inset-bottom/);
+  assert.match(styles[2], /max-height:700px/);
+}));
+
 test('harness provides a direct answer-validation surface', () => withServer(async (origin) => {
   const response = await fetch(`${origin}/api/answers/validate`, {
     method: 'POST', headers: { 'content-type': 'application/json' },

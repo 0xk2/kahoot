@@ -24,7 +24,9 @@ const playerStyleUrl = new URL('../../public/player.css', import.meta.url);
 const liveAssets = new Map([
   ['/live', ['../../public/live.html', 'text/html; charset=utf-8']],
   ['/live.js', ['../../public/live.js', 'text/javascript; charset=utf-8']],
-  ['/live.css', ['../../public/live.css', 'text/css; charset=utf-8']]
+  ['/live.css', ['../../public/live.css', 'text/css; charset=utf-8']],
+  ['/mobile', ['../../public/mobile.html', 'text/html; charset=utf-8']],
+  ['/mobile.css', ['../../public/mobile.css', 'text/css; charset=utf-8']]
 ]);
 
 export async function createHarnessServer({ clock } = {}) {

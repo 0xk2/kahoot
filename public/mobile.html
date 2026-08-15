@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>R2-1 mobile layout review</title>
+  <link rel="stylesheet" href="/mobile.css">
+</head>
+<body>
+  <header>
+    <div><p>R2-1 test harness</p><h1>Mobile layout review</h1></div>
+    <span>Authentication bypassed only in this local harness</span>
+  </header>
+  <main>
+    <p class="intro">Open each interactive surface at a narrow browser width or directly on a phone. Representative quiz, room, and gameplay data reset when the harness restarts.</p>
+    <div class="surfaces">
+      <article>
+        <span class="number">01</span><div><h2>Creator</h2><p>Review the quiz library, filters, card actions, and the full question editor.</p></div>
+        <a href="/creator">Open creator <span aria-hidden="true">→</span></a>
+      </article>
+      <article>
+        <span class="number">02</span><div><h2>Host</h2><p>Create a room, inspect the PIN and QR layout, then join players in another tab.</p></div>
+        <a href="/live">Open host <span aria-hidden="true">→</span></a>
+      </article>
+      <article>
+        <span class="number">03</span><div><h2>Player</h2><p>Join PIN <strong>ORBIT1</strong>, answer both question types, and inspect feedback and rankings.</p></div>
+        <a href="/play">Open player <span aria-hidden="true">→</span></a>
+      </article>
+    </div>
+    <section class="checklist">
+      <h2>Review checklist</h2>
+      <ul>
+        <li>No horizontal page overflow at 320–430 px widths</li>
+        <li>Primary actions and form fields remain easy to tap</li>
+        <li>Long quiz titles, nicknames, PINs, and answers stay contained</li>
+        <li>Short-height screens can reach every action</li>
+        <li>Safe-area spacing protects controls on notched devices</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
