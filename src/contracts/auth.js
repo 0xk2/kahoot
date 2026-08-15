@@ -1,4 +1,4 @@
-import { array, id, isoDate, object, oneOf, optionalString, string } from './validation.js';
+import { array, ContractError, id, isoDate, object, oneOf, optionalString, string } from './validation.js';
 
 export const USER_ROLES = Object.freeze(['host', 'admin']);
 
@@ -6,7 +6,7 @@ export function parseAuthUser(value, path = 'user') {
   const input = object(value, path);
   return Object.freeze({
     id: id(input.id, `${path}.id`),
-    email: string(input.email, `${path}.email`, { max: 254 }),
+    username: username(input.username, `${path}.username`),
     displayName: string(input.displayName, `${path}.displayName`, { max: 80 }),
     roles: Object.freeze(array(input.roles, `${path}.roles`, (role, rolePath) =>
       oneOf(role, rolePath, USER_ROLES), { min: 1, max: USER_ROLES.length })),
@@ -17,7 +17,7 @@ export function parseAuthUser(value, path = 'user') {
 export function parseRegisterInput(value, path = 'register') {
   const input = object(value, path);
   return Object.freeze({
-    email: string(input.email, `${path}.email`, { min: 3, max: 254 }).toLowerCase(),
+    username: username(input.username, `${path}.username`),
     password: string(input.password, `${path}.password`, { min: 12, max: 128 }),
     displayName: string(input.displayName, `${path}.displayName`, { max: 80 })
   });
@@ -26,9 +26,17 @@ export function parseRegisterInput(value, path = 'register') {
 export function parseLoginInput(value, path = 'login') {
   const input = object(value, path);
   return Object.freeze({
-    email: string(input.email, `${path}.email`, { min: 3, max: 254 }).toLowerCase(),
+    username: username(input.username, `${path}.username`),
     password: string(input.password, `${path}.password`, { min: 1, max: 128 })
   });
+}
+
+function username(value, path) {
+  const normalized = string(value, path, { min: 3, max: 32 }).toLowerCase();
+  if (!/^[a-z0-9](?:[a-z0-9_-]*[a-z0-9])?$/.test(normalized)) {
+    throw new ContractError(path, 'may contain letters, numbers, underscores, and hyphens');
+  }
+  return normalized;
 }
 
 export function parseAuthSession(value, path = 'authSession') {
