@@ -72,3 +72,23 @@ test('creator harness saves validated multiple-choice settings', () => withServe
   assert.equal(saved.questions[0].type, 'multiple_choice');
   assert.equal(saved.questions[0].timeLimitSeconds, 60);
 }));
+
+test('player harness supports direct anonymous join and question retrieval', () => withServer(async (origin) => {
+  const page = await fetch(`${origin}/play`).then((response) => response.text());
+  assert.match(page, /Player test harness · no account required/);
+  const joinResponse = await fetch(`${origin}/api/player/join`, { method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ joinCode: 'orbit1', nickname: 'Nova', reconnectToken: null }) });
+  const joined = await joinResponse.json();
+  const state = await fetch(`${origin}/api/player/state?participantId=${joined.participantId}`).then((response) => response.json());
+  assert.equal(joinResponse.status, 201);
+  assert.equal(state.phase, 'question');
+  assert.equal(state.question.questionId, 'q-mars');
+  assert.equal('isCorrect' in state.question.options[0], false);
+  const answerResponse = await fetch(`${origin}/api/player/answer`, { method: 'POST',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionId: joined.sessionId,
+      participantId: joined.participantId, questionId: 'q-mars', optionIds: ['opt-mars'], responseTimeMs: 5000 }) });
+  const result = await answerResponse.json();
+  assert.equal(result.isCorrect, true);
+  assert.equal(result.totalScore > 0, true);
+}));
