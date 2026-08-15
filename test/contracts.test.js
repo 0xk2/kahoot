@@ -14,8 +14,8 @@ test('representative harness data satisfies all composed contracts', () => {
 });
 
 test('join inputs normalize codes and preserve optional reconnect state', () => {
-  assert.deepEqual(parseJoinSessionInput({ joinCode: 'orb1', nickname: 'Lin', reconnectToken: null }), {
-    joinCode: 'ORB1', nickname: 'Lin', reconnectToken: null
+  assert.deepEqual(parseJoinSessionInput({ joinCode: 'orbit1', nickname: 'Lin', reconnectToken: null }), {
+    joinCode: 'ORBIT1', nickname: 'Lin', reconnectToken: null
   });
 });
 

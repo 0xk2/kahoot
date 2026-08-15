@@ -10,11 +10,18 @@ import { applySchema } from '../db/schema.js';
 import { AuthRepository } from '../auth/repository.js';
 import { AuthService } from '../auth/service.js';
 import { createAuthHandler } from '../auth/http.js';
+import { RoomService } from '../rooms/service.js';
+import { createRoomHandler } from '../rooms/http.js';
 
 const pageUrl = new URL('../../public/harness.html', import.meta.url);
 const creatorPageUrl = new URL('../../public/creator.html', import.meta.url);
 const creatorScriptUrl = new URL('../../public/creator.js', import.meta.url);
 const creatorStyleUrl = new URL('../../public/creator.css', import.meta.url);
+const liveAssets = new Map([
+  ['/live', ['../../public/live.html', 'text/html; charset=utf-8']],
+  ['/live.js', ['../../public/live.js', 'text/javascript; charset=utf-8']],
+  ['/live.css', ['../../public/live.css', 'text/css; charset=utf-8']]
+]);
 
 export async function createHarnessServer({ clock } = {}) {
   const store = createCreatorStore(creatorQuizzes, clock);
@@ -23,9 +30,16 @@ export async function createHarnessServer({ clock } = {}) {
   const service = new AuthService(new AuthRepository(database));
   await service.register({ username: 'demo_creator', password: 'correct horse battery staple', displayName: 'Demo Creator' });
   const handleAuth = createAuthHandler(service);
+  const handleRoom = createRoomHandler(new RoomService({ clock: clock ? () => new Date(clock()) : undefined }));
   return createServer(async (request, response) => {
     try {
       if (await handleAuth(request, response)) return;
+      if (await handleRoom(request, response)) return;
+      const pathname = new URL(request.url, 'http://localhost').pathname;
+      if (request.method === 'GET' && liveAssets.has(pathname)) {
+        const [path, contentType] = liveAssets.get(pathname);
+        return send(response, 200, await readFile(new URL(path, import.meta.url), 'utf8'), contentType);
+      }
       if (request.method === 'GET' && request.url === '/') {
         return send(response, 200, await readFile(pageUrl, 'utf8'), 'text/html; charset=utf-8');
       }
