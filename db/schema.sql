@@ -2,7 +2,7 @@ PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
-  email TEXT NOT NULL COLLATE NOCASE UNIQUE,
+  username TEXT NOT NULL COLLATE NOCASE UNIQUE,
   password_hash TEXT NOT NULL,
   display_name TEXT NOT NULL,
   created_at TEXT NOT NULL,
@@ -117,3 +117,5 @@ CREATE INDEX IF NOT EXISTS idx_quizzes_owner ON quizzes(owner_id);
 CREATE INDEX IF NOT EXISTS idx_questions_quiz ON quiz_questions(quiz_id, position);
 CREATE INDEX IF NOT EXISTS idx_participants_session ON participants(session_id, score DESC);
 CREATE INDEX IF NOT EXISTS idx_answers_participant ON answers(participant_id);
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_user ON auth_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_expiry ON auth_sessions(expires_at);

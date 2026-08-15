@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHarnessServer } from '../src/harness/server.js';
 
 async function withServer(run) {
-  const server = createHarnessServer();
+  const server = await createHarnessServer();
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   try {
     const { port } = server.address();
@@ -13,7 +13,7 @@ async function withServer(run) {
   }
 }
 
-test('harness exposes representative state without authentication', () => withServer(async (origin) => {
+test('harness retains representative gameplay state without authentication', () => withServer(async (origin) => {
   const response = await fetch(`${origin}/api/state`);
   const state = await response.json();
   assert.equal(response.status, 200);
@@ -21,11 +21,12 @@ test('harness exposes representative state without authentication', () => withSe
   assert.equal('isCorrect' in state.currentQuestion.options[0], false);
 }));
 
-test('harness loads its top-level-await client as a module', () => withServer(async (origin) => {
+test('harness provides the creator account test surface', () => withServer(async (origin) => {
   const response = await fetch(origin);
   const page = await response.text();
   assert.equal(response.status, 200);
   assert.match(page, /<script type="module">/);
+  assert.match(page, /demo_creator/);
 }));
 
 test('harness provides a direct answer-validation surface', () => withServer(async (origin) => {
