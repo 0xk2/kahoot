@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Live room harness</title><link rel="stylesheet" href="/live.css">
+</head>
+<body>
+  <header><a href="/live">Quiz live</a><span>R1-4 test harness · auth bypassed</span></header>
+  <main>
+    <section id="welcome" class="panel">
+      <p class="eyebrow">Live rooms</p><h1>Host or join a game</h1>
+      <div class="actions">
+        <form id="host-form"><h2>Host</h2><p>Launch the representative Space quiz.</p><button>Create live room</button></form>
+        <form id="join-form"><h2>Join</h2><label>Six-character PIN<input id="pin" maxlength="6" autocomplete="off" required></label><label>Nickname<input id="nickname" maxlength="40" value="Mae" required></label><button>Join lobby</button></form>
+      </div>
+    </section>
+    <section id="host" class="panel" hidden>
+      <p class="eyebrow">Host lobby</p><div class="room-head"><div><h1>Game PIN <strong id="host-pin"></strong></h1><a id="join-link"></a></div><img id="qr" alt="QR code linking to this room"></div>
+      <p id="host-status" class="status"></p><div class="toolbar"><button id="start">Start game</button><button id="complete">Complete game</button><button id="cancel" class="secondary">Cancel room</button></div>
+      <h2>Players <span id="count"></span></h2><div id="players" class="players"></div>
+    </section>
+    <section id="player" class="panel" hidden>
+      <p class="eyebrow">Player lobby</p><h1 id="player-title"></h1><p id="player-status" class="status"></p>
+      <p>Your place is reserved if the connection drops. This harness stores the reconnect token in this browser.</p>
+      <button id="disconnect" class="secondary">Simulate disconnect</button>
+    </section>
+    <p id="message" role="alert"></p>
+  </main><script type="module" src="/live.js"></script>
+</body>
+</html>

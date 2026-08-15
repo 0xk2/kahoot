@@ -8,7 +8,7 @@ export function parseGameSession(value, path = 'session') {
   return Object.freeze({
     id: id(input.id, `${path}.id`), quizId: id(input.quizId, `${path}.quizId`),
     hostId: id(input.hostId, `${path}.hostId`),
-    joinCode: string(input.joinCode, `${path}.joinCode`, { min: 4, max: 12 }),
+    joinCode: string(input.joinCode, `${path}.joinCode`, { min: 6, max: 6 }),
     status: oneOf(input.status, `${path}.status`, SESSION_STATUSES),
     currentQuestionIndex: nullable(input.currentQuestionIndex, integer, `${path}.currentQuestionIndex`),
     createdAt: isoDate(input.createdAt, `${path}.createdAt`),
@@ -36,7 +36,7 @@ export function parseCreateSessionInput(value, path = 'createSession') {
 export function parseJoinSessionInput(value, path = 'joinSession') {
   const input = object(value, path);
   return Object.freeze({
-    joinCode: string(input.joinCode, `${path}.joinCode`, { min: 4, max: 12 }).toUpperCase(),
+    joinCode: string(input.joinCode, `${path}.joinCode`, { min: 6, max: 6 }).toUpperCase(),
     nickname: string(input.nickname, `${path}.nickname`, { max: 40 }),
     reconnectToken: optionalString(input.reconnectToken, `${path}.reconnectToken`, { min: 16, max: 256 })
   });

@@ -1,0 +1,56 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { RoomService } from '../src/rooms/service.js';
+
+function fixture(options = {}) {
+  let tick = 0;
+  return new RoomService({ clock: () => new Date(`2026-08-15T12:00:${String(tick++).padStart(2, '0')}.000Z`), ...options });
+}
+
+test('rooms receive unique six-character PINs and shareable links', () => {
+  const values = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+  const service = fixture({ random: () => values.shift() ?? 1, origin: 'http://quiz.test' });
+  const first = service.create({ quizId: 'quiz-space' });
+  const second = service.create({ quizId: 'quiz-space' });
+  assert.match(first.joinCode, /^[A-HJ-NP-Z2-9]{6}$/);
+  assert.notEqual(first.joinCode, second.joinCode);
+  assert.equal(first.joinUrl, `http://quiz.test/live?pin=${first.joinCode}`);
+  assert.match(first.qrImageUrl, /create-qr-code/);
+});
+
+test('lobby accepts 50 players and rejects duplicates or overflow', () => {
+  const service = fixture();
+  const room = service.create({ quizId: 'quiz-space' });
+  for (let index = 1; index <= 50; index += 1) {
+    service.join({ joinCode: room.joinCode, nickname: `Player ${index}`, reconnectToken: null });
+  }
+  assert.throws(() => service.join({ joinCode: room.joinCode, nickname: 'Extra', reconnectToken: null }), /Room is full/);
+  const other = service.create({ quizId: 'quiz-space' });
+  service.join({ joinCode: other.joinCode, nickname: 'Ada', reconnectToken: null });
+  assert.throws(() => service.join({ joinCode: other.joinCode, nickname: 'ada', reconnectToken: null }), /already in use/);
+});
+
+test('disconnect and reconnect preserve identity while invalid tokens fail', () => {
+  const service = fixture();
+  const room = service.create({ quizId: 'quiz-space' });
+  const joined = service.join({ joinCode: room.joinCode, nickname: 'Lin', reconnectToken: null });
+  service.disconnect(room.joinCode, joined.reconnectToken);
+  assert.equal(service.get(room.joinCode).participants[0].status, 'disconnected');
+  const rejoined = service.join({ joinCode: room.joinCode, nickname: 'Ignored', reconnectToken: joined.reconnectToken });
+  assert.equal(rejoined.participant.id, joined.participant.id);
+  assert.equal(rejoined.participant.status, 'connected');
+  assert.throws(() => service.join({ joinCode: room.joinCode, nickname: 'Lin', reconnectToken: 'x'.repeat(20) }), /invalid/);
+});
+
+test('room lifecycle only follows lobby to active to completed', () => {
+  const service = fixture();
+  const room = service.create({ quizId: 'quiz-space' });
+  assert.throws(() => service.transition(room.joinCode, 'completed'), /Cannot change/);
+  const active = service.transition(room.joinCode, 'active');
+  assert.equal(active.currentQuestionIndex, 0);
+  assert.ok(active.startedAt);
+  assert.throws(() => service.join({ joinCode: room.joinCode, nickname: 'Late', reconnectToken: null }), /already started/);
+  const completed = service.transition(room.joinCode, 'completed');
+  assert.ok(completed.endedAt);
+  assert.throws(() => service.transition(room.joinCode, 'active'), /Cannot change/);
+});
