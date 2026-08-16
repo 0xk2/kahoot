@@ -1,3 +1,5 @@
+import { pageTitle } from './page-titles.js';
+
 const joinPanel = document.querySelector('#join');
 const gamePanel = document.querySelector('#game');
 const identity = document.querySelector('#identity');
@@ -33,11 +35,12 @@ async function refresh() {
   } catch { sessionStorage.removeItem('kahoot-player'); player = null; }
 }
 
-function renderLobby(state) { gamePanel.innerHTML = `<div class="result"><p class="eyebrow">You're in</p><h1>Hi, ${escape(state.player.nickname)}!</h1><p>Waiting for the host to start…</p></div>`; }
-function renderCompleted(state) { clearInterval(timer); gamePanel.innerHTML = `<div class="result"><p class="eyebrow">Quiz complete</p><h1>Final leaderboard</h1><p class="score">${state.player.score} points</p>${leaderboard(state.leaderboard, state.player.id)}</div>`; }
+function renderLobby(state) { document.title = pageTitle('Waiting to play'); gamePanel.innerHTML = `<div class="result"><p class="eyebrow">You're in</p><h1>Hi, ${escape(state.player.nickname)}!</h1><p>Waiting for the host to start…</p></div>`; }
+function renderCompleted(state) { document.title = pageTitle('Final leaderboard'); clearInterval(timer); gamePanel.innerHTML = `<div class="result"><p class="eyebrow">Quiz complete</p><h1>Final leaderboard</h1><p class="score">${state.player.score} points</p>${leaderboard(state.leaderboard, state.player.id)}</div>`; }
 function renderQuestion(state) {
   clearInterval(timer); const q = state.question; const selected = new Set();
   if (state.phase === 'feedback') return renderFeedback(state);
+  document.title = pageTitle(`Question ${q.questionNumber}`);
   questionStarted = Date.now();
   gamePanel.innerHTML = `<div class="meta"><span>Question ${q.questionNumber} of ${q.totalQuestions}</span><span class="timer"></span></div><h1>${escape(q.prompt)}</h1><p>${q.type === 'multiple_choice' ? 'Select all that apply' : 'Choose one answer'}</p><fieldset class="answers">${q.options.map((option) => `<button class="answer" type="button" data-id="${escape(option.id)}">${escape(option.text)}</button>`).join('')}</fieldset><button class="submit" disabled>Submit answer</button><p class="error" role="alert"></p>`;
   const submit = gamePanel.querySelector('.submit');
@@ -51,6 +54,7 @@ function renderQuestion(state) {
   updateTimer(); timer = setInterval(updateTimer, 1000);
 }
 function renderFeedback(state) {
+  document.title = pageTitle('Answer feedback');
   clearInterval(timer); const result = state.result;
   gamePanel.innerHTML = `<div class="result"><p class="eyebrow">${result.timedOut ? 'Time expired' : result.isCorrect ? 'Correct!' : 'Not this time'}</p><h1>${result.isCorrect ? `+${result.pointsAwarded} points` : 'Keep going!'}</h1><p class="mode">${state.scoringMode === 'fixed' ? 'Fixed points' : 'Speed-weighted'} scoring</p><div class="answers reveal">${result.reveal.map((option) => `<div class="answer ${option.isCorrect ? 'correct' : option.isSelected ? 'wrong' : ''}">${escape(option.text)} ${option.isCorrect ? '<strong>✓ Correct</strong>' : option.isSelected ? '<strong>✕ Your answer</strong>' : ''}</div>`).join('')}</div><p>${escape(result.explanation || '')}</p><p class="score">Score: ${result.totalScore}</p><h2>Live leaderboard</h2>${leaderboard(state.leaderboard, state.player.id)}<p>${state.mode === 'host' ? 'Waiting for the host to continue…' : 'Use Advance when you are ready.'}</p></div>`;
 }
