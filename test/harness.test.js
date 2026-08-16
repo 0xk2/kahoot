@@ -36,7 +36,9 @@ test('public landing page exposes host and PIN-based join paths', () => withServ
   assert.match(page, /<title>Home \| Quizzes<\/title>/);
   assert.match(page, /aria-label="Quizzes home"/);
   assert.match(script, /\/play\?pin=/);
-  assert.match(await styleResponse.text(), /max-width:760px/);
+  const style = await styleResponse.text();
+  assert.match(style, /max-width:760px/);
+  assert.doesNotMatch(style, /\.hero::before/);
 }));
 
 test('product pages have distinct Quizzes titles and can load dynamic title support', () => withServer(async (origin) => {
