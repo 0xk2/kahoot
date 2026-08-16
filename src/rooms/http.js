@@ -18,6 +18,15 @@ export function createRoomHandler(service, { authenticate, findQuiz } = {}) {
       if (request.method === 'POST' && url.pathname === '/api/rooms/join') {
         return json(response, 200, service.join(await readJson(request)));
       }
+      if (request.method === 'GET' && url.pathname === '/api/host/sessions') {
+        const host = authenticate?.(request);
+        const sessions = service.list(host?.id).map((room) => ({
+          ...room,
+          quiz: quizSummary(findQuiz?.(room.quizId)),
+          results: room.status === 'completed' ? standings(room.participants) : null
+        }));
+        return json(response, 200, sessions);
+      }
       const match = url.pathname.match(/^\/api\/rooms\/([A-Z0-9]{6})(?:\/(.*))?$/i);
       if (!match) return false;
       const [, pin, action] = match;
@@ -42,6 +51,22 @@ export function createRoomHandler(service, { authenticate, findQuiz } = {}) {
       throw error;
     }
   };
+}
+
+function quizSummary(quiz) {
+  return quiz ? { id: quiz.id, title: quiz.title, questionCount: quiz.questions.length } : null;
+}
+
+function standings(participants) {
+  let previousScore;
+  let rank = 0;
+  return participants.filter(({ status }) => status !== 'removed')
+    .sort((left, right) => right.score - left.score || left.nickname.localeCompare(right.nickname))
+    .map((participant, index) => {
+      if (participant.score !== previousScore) rank = index + 1;
+      previousScore = participant.score;
+      return { rank, participantId: participant.id, nickname: participant.nickname, score: participant.score };
+    });
 }
 
 function json(response, status, value) {

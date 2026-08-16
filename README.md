@@ -154,3 +154,16 @@ tappable; long titles, answers, nicknames, and room details stay contained; and 
 respect device safe areas. Important edges: open the creator question editor, create a host room and
 add several players, complete both single- and multiple-choice player questions, rotate a
 short-height phone, and enable large browser text.
+
+### R5-2 host session hub harness
+
+Run `HOST=$(tailscale ip -4) npm run harness`, then open
+<http://sontra.tailc1c4f8.ts.net:4173/host>. Authentication is bypassed only by this local surface,
+which supplies the representative `Demo Creator` identity. The hub starts with a three-player lobby
+and a completed session with deterministic scores, including a tie for second place.
+
+Expected result: active sessions show their PIN, player count, status, live-display link, and valid
+start/end/cancel controls. Completed sessions show the winner and open a full ranked result dialog.
+Important edges: empty and long player names stay contained, tied scores share a rank, cancelled
+sessions have no fabricated standings, and stale simultaneous controls refresh instead of applying
+twice. Restarting the harness restores the representative data.

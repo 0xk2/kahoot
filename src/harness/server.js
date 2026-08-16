@@ -27,6 +27,9 @@ const liveAssets = new Map([
   ['/live', ['../../public/live.html', 'text/html; charset=utf-8']],
   ['/live.js', ['../../public/live.js', 'text/javascript; charset=utf-8']],
   ['/live.css', ['../../public/live.css', 'text/css; charset=utf-8']],
+  ['/host', ['../../public/host.html', 'text/html; charset=utf-8']],
+  ['/host.js', ['../../public/host.js', 'text/javascript; charset=utf-8']],
+  ['/host.css', ['../../public/host.css', 'text/css; charset=utf-8']],
   ['/mobile', ['../../public/mobile.html', 'text/html; charset=utf-8']],
   ['/mobile.css', ['../../public/mobile.css', 'text/css; charset=utf-8']]
 ]);
@@ -43,7 +46,9 @@ export async function createHarnessServer({ clock } = {}) {
   const service = new AuthService(new AuthRepository(database));
   await service.register({ username: 'demo_creator', password: 'correct horse battery staple', displayName: 'Demo Creator' });
   const handleAuth = createAuthHandler(service);
-  const handleRoom = createRoomHandler(new RoomService({ clock: clock ? () => new Date(clock()) : undefined }), {
+  const roomService = new RoomService({ clock: clock ? () => new Date(clock()) : undefined });
+  seedHostSessions(roomService);
+  const handleRoom = createRoomHandler(roomService, {
     authenticate: () => ({ id: 'user-host', displayName: 'Demo Creator' }),
     findQuiz: (id) => store.get(id)
   });
@@ -153,6 +158,21 @@ export async function createHarnessServer({ clock } = {}) {
       return json(response, 500, { error: 'Internal server error' });
     }
   });
+}
+
+function seedHostSessions(service) {
+  const past = service.create({ quizId: 'quiz-space' }, 'user-host');
+  const players = [
+    service.join({ joinCode: past.joinCode, nickname: 'Maya', reconnectToken: null }),
+    service.join({ joinCode: past.joinCode, nickname: 'Theo', reconnectToken: null }),
+    service.join({ joinCode: past.joinCode, nickname: 'Iris', reconnectToken: null })
+  ];
+  service.transition(past.joinCode, 'active', 'user-host', 0);
+  [4200, 3650, 3650].forEach((score, index) => service.recordScore(past.joinCode, players[index].participant.id, score));
+  service.transition(past.joinCode, 'completed', 'user-host', 1);
+  const active = service.create({ quizId: 'quiz-space' }, 'user-host');
+  ['Nova', 'Sol', 'Long Team Name Testing Containment'].forEach((nickname) =>
+    service.join({ joinCode: active.joinCode, nickname, reconnectToken: null }));
 }
 
 function send(response, status, body, contentType) {

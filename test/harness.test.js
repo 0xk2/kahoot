@@ -214,3 +214,24 @@ test('host HTTP actions reject stale revisions without double-transitioning', ()
   assert.equal(current.status, 'active');
   assert.equal(current.revision, 1);
 }));
+
+test('host hub exposes active controls and ranked past results without sign-in', () => withServer(async (origin) => {
+  const [pageResponse, sessionsResponse] = await Promise.all([
+    fetch(`${origin}/host`), fetch(`${origin}/api/host/sessions`)
+  ]);
+  const page = await pageResponse.text();
+  const sessions = await sessionsResponse.json();
+  assert.equal(pageResponse.status, 200);
+  assert.match(page, /R5-2 host hub test harness/);
+  assert.match(page, /Active sessions/);
+  assert.match(page, /Past results/);
+  const active = sessions.find(({ status }) => status === 'lobby');
+  const completed = sessions.find(({ status }) => status === 'completed');
+  assert.equal(active.participants.length, 3);
+  assert.equal(completed.quiz.title, 'A Tiny Tour of Space');
+  assert.deepEqual(completed.results.map(({ rank, score }) => [rank, score]), [[1, 4200], [2, 3650], [2, 3650]]);
+  const started = await fetch(`${origin}/api/rooms/${active.joinCode}/lifecycle`, { method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ status: 'active', expectedRevision: active.revision }) });
+  assert.equal(started.status, 200);
+}));

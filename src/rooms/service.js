@@ -73,6 +73,22 @@ export class RoomService {
 
   get(joinCode) { return this.snapshot(this.#room(joinCode)); }
 
+  list(hostId) {
+    if (!hostId) throw new RoomError('Authentication required', 401);
+    return Object.freeze([...this.rooms.values()]
+      .filter((room) => room.hostId === hostId)
+      .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+      .map((room) => this.snapshot(room)));
+  }
+
+  recordScore(joinCode, participantId, score) {
+    const participant = this.#room(joinCode).participants.get(participantId);
+    if (!participant) throw new RoomError('Player not found', 404);
+    if (!Number.isSafeInteger(score) || score < 0) throw new RoomError('Score must be a non-negative integer');
+    participant.score = score;
+    return publicParticipant(participant);
+  }
+
   snapshot(room) {
     const joinUrl = `${room.origin}/live?pin=${room.joinCode}`;
     return Object.freeze({ id: room.id, quizId: room.quizId, joinCode: room.joinCode, revision: room.revision,

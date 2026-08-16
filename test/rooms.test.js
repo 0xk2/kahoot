@@ -64,3 +64,15 @@ test('host mutations require ownership and reject stale concurrent writes', () =
   assert.throws(() => service.transition(room.joinCode, 'completed', 'creator-1', 0), /refresh/);
   assert.equal(service.get(room.joinCode).status, 'active');
 });
+
+test('host session listing is owner-scoped and retains ranked scores', () => {
+  const service = fixture();
+  const owned = service.create({ quizId: 'quiz-space' }, 'creator-1');
+  service.create({ quizId: 'quiz-other' }, 'creator-2');
+  const joined = service.join({ joinCode: owned.joinCode, nickname: 'Ada', reconnectToken: null });
+  service.recordScore(owned.joinCode, joined.participant.id, 2400);
+  assert.deepEqual(service.list('creator-1').map(({ joinCode }) => joinCode), [owned.joinCode]);
+  assert.equal(service.list('creator-1')[0].participants[0].score, 2400);
+  assert.throws(() => service.list(), /Authentication required/);
+  assert.throws(() => service.recordScore(owned.joinCode, joined.participant.id, -1), /non-negative/);
+});
