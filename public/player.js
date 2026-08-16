@@ -1,6 +1,8 @@
 const joinPanel = document.querySelector('#join');
 const gamePanel = document.querySelector('#game');
 const identity = document.querySelector('#identity');
+const requestedPin = new URLSearchParams(location.search).get('pin');
+if (requestedPin) document.querySelector('[name="joinCode"]').value = requestedPin.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12);
 let player = JSON.parse(sessionStorage.getItem('kahoot-player') || 'null');
 let questionStarted = 0;
 let timer;

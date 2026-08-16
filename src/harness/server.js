@@ -14,7 +14,7 @@ import { createAuthHandler } from '../auth/http.js';
 import { RoomService } from '../rooms/service.js';
 import { createRoomHandler } from '../rooms/http.js';
 
-const pageUrl = new URL('../../public/harness.html', import.meta.url);
+const pageUrl = new URL('../../public/landing.html', import.meta.url);
 const creatorPageUrl = new URL('../../public/creator.html', import.meta.url);
 const creatorScriptUrl = new URL('../../public/creator.js', import.meta.url);
 const creatorStyleUrl = new URL('../../public/creator.css', import.meta.url);
@@ -22,6 +22,8 @@ const playerPageUrl = new URL('../../public/player.html', import.meta.url);
 const playerScriptUrl = new URL('../../public/player.js', import.meta.url);
 const playerStyleUrl = new URL('../../public/player.css', import.meta.url);
 const liveAssets = new Map([
+  ['/landing.js', ['../../public/landing.js', 'text/javascript; charset=utf-8']],
+  ['/landing.css', ['../../public/landing.css', 'text/css; charset=utf-8']],
   ['/live', ['../../public/live.html', 'text/html; charset=utf-8']],
   ['/live.js', ['../../public/live.js', 'text/javascript; charset=utf-8']],
   ['/live.css', ['../../public/live.css', 'text/css; charset=utf-8']],
@@ -60,7 +62,7 @@ export async function createHarnessServer({ clock } = {}) {
       if (request.method === 'GET' && request.url === '/api/state') {
         return json(response, 200, harnessState());
       }
-      if (request.method === 'GET' && request.url === '/play') {
+      if (request.method === 'GET' && pathname === '/play') {
         return send(response, 200, await readFile(playerPageUrl, 'utf8'), 'text/html; charset=utf-8');
       }
       if (request.method === 'GET' && request.url === '/player.js') {

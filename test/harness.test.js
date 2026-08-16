@@ -21,12 +21,30 @@ test('harness retains representative gameplay state without authentication', () 
   assert.equal('isCorrect' in state.currentQuestion.options[0], false);
 }));
 
-test('harness provides the creator account test surface', () => withServer(async (origin) => {
-  const response = await fetch(origin);
-  const page = await response.text();
-  assert.equal(response.status, 200);
-  assert.match(page, /<script type="module">/);
-  assert.match(page, /demo_creator/);
+test('public landing page exposes host and PIN-based join paths', () => withServer(async (origin) => {
+  const [pageResponse, scriptResponse, styleResponse] = await Promise.all([
+    fetch(origin), fetch(`${origin}/landing.js`), fetch(`${origin}/landing.css`)
+  ]);
+  const page = await pageResponse.text();
+  const script = await scriptResponse.text();
+  assert.equal(pageResponse.status, 200);
+  assert.equal(scriptResponse.status, 200);
+  assert.equal(styleResponse.status, 200);
+  assert.match(page, /href="\/creator"/);
+  assert.match(page, /id="join-form"/);
+  assert.match(page, /ORBIT1/);
+  assert.match(script, /\/play\?pin=/);
+  assert.match(await styleResponse.text(), /max-width:760px/);
+}));
+
+test('player surface accepts a landing-page PIN query', () => withServer(async (origin) => {
+  const [page, script] = await Promise.all([
+    fetch(`${origin}/play?pin=ORBIT1`).then((response) => response.text()),
+    fetch(`${origin}/player.js`).then((response) => response.text())
+  ]);
+  assert.match(page, /name="joinCode"/);
+  assert.match(script, /URLSearchParams/);
+  assert.match(script, /requestedPin/);
 }));
 
 test('mobile review harness links all auth-free interactive surfaces', () => withServer(async (origin) => {
