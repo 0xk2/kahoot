@@ -35,6 +35,18 @@ npm run harness
 For tailnet access, run `HOST=$(tailscale ip -4) npm run harness` and open
 <http://sontra.tailc1c4f8.ts.net:4173>.
 
+### R3-1 public landing-page harness
+
+Run `HOST=$(tailscale ip -4) npm run harness`, then open
+<http://sontra.tailc1c4f8.ts.net:4173/>. This direct public surface requires no account. Use
+**Create & host a quiz** to enter the representative creator library, or submit PIN `ORBIT1` to
+arrive at the player join screen with the room code prefilled.
+
+Expected result: both entry paths are prominent and keyboard accessible, invalid or incomplete
+PINs stay on the page with a useful error, and the layout remains usable at phone and desktop
+widths. Important edges: lowercase PINs normalize to uppercase, punctuation is removed, PINs must
+contain 4–12 letters or numbers, and the player still chooses a nickname before joining.
+
 Open <http://127.0.0.1:4173> for the issue R1-2 human test harness. It uses an isolated in-memory
 database and directly exposes register, login, current-session, and logout actions without any
 unrelated application authentication. Use `demo_creator` / `correct horse battery staple`, or

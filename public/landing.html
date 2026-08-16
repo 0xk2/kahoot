@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Host a live quiz or join a room with a PIN.">
+  <title>BrightQuiz — play together</title>
+  <link rel="stylesheet" href="/landing.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="BrightQuiz home"><span aria-hidden="true">b!</span> BrightQuiz</a>
+    <a class="host-link" href="/creator">Host a quiz</a>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Quiz. Laugh. Learn.</p>
+        <h1>Bring everyone into the game.</h1>
+        <p class="lead">Create a live quiz for your crowd, or enter a room PIN to jump straight in.</p>
+        <a class="primary" href="/creator">Create &amp; host a quiz <span aria-hidden="true">→</span></a>
+        <p class="host-note">Build questions, launch a room, and lead the game.</p>
+      </div>
+      <div class="play-card">
+        <div class="card-art" aria-hidden="true"><span>?</span><span>★</span><span>✓</span></div>
+        <p class="eyebrow">Joining a room?</p>
+        <h2>Enter your PIN</h2>
+        <form id="join-form" novalidate>
+          <label for="room-pin">Room PIN</label>
+          <input id="room-pin" name="pin" inputmode="text" autocomplete="one-time-code" maxlength="12" placeholder="e.g. ORBIT1" aria-describedby="pin-help pin-error" required>
+          <p id="pin-help" class="help">Ask your host for the code shown on their screen.</p>
+          <p id="pin-error" class="error" role="alert"></p>
+          <button type="submit">Join the game</button>
+        </form>
+        <p class="harness-note">Local review: try PIN <strong>ORBIT1</strong>. No account needed.</p>
+      </div>
+    </section>
+    <section class="steps" aria-labelledby="how-title">
+      <p class="eyebrow">Ready in seconds</p>
+      <h2 id="how-title">One place. Two ways to play.</h2>
+      <div class="step-grid">
+        <article><span>01</span><h3>Host</h3><p>Choose a quiz and share the room PIN on your screen.</p></article>
+        <article><span>02</span><h3>Join</h3><p>Enter the PIN, pick a nickname, and get ready to answer.</p></article>
+        <article><span>03</span><h3>Play</h3><p>Race through questions and climb the live leaderboard.</p></article>
+      </div>
+    </section>
+  </main>
+  <footer><a class="brand" href="/"><span aria-hidden="true">b!</span> BrightQuiz</a><p>Made for learning out loud.</p></footer>
+  <script type="module" src="/landing.js"></script>
+</body>
+</html>
