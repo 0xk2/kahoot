@@ -15,6 +15,11 @@ export function createRoomHandler(service, { authenticate, findQuiz } = {}) {
         const origin = `http://${request.headers.host}`;
         return json(response, 201, service.create(input, host.id, origin));
       }
+      if (request.method === 'GET' && url.pathname === '/api/rooms') {
+        const host = authenticate?.(request);
+        return json(response, 200, service.list({ hostId: host?.id,
+          quizId: url.searchParams.get('quizId') || undefined }));
+      }
       if (request.method === 'POST' && url.pathname === '/api/rooms/join') {
         return json(response, 200, service.join(await readJson(request)));
       }

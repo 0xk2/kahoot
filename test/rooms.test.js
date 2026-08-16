@@ -18,6 +18,31 @@ test('rooms receive unique six-character PINs and shareable links', () => {
   assert.match(first.qrImageUrl, /create-qr-code/);
 });
 
+test('multiple sessions for one quiz keep lifecycle and participants isolated', () => {
+  const service = fixture();
+  const first = service.create({ quizId: 'quiz-space' }, 'creator-1');
+  const second = service.create({ quizId: 'quiz-space' }, 'creator-1');
+  service.join({ joinCode: first.joinCode, nickname: 'Ada', reconnectToken: null });
+  service.join({ joinCode: second.joinCode, nickname: 'Ada', reconnectToken: null });
+  service.transition(first.joinCode, 'active', 'creator-1', 0);
+
+  assert.equal(service.get(first.joinCode).status, 'active');
+  assert.equal(service.get(second.joinCode).status, 'lobby');
+  assert.equal(service.get(first.joinCode).participants[0].sessionId, first.id);
+  assert.equal(service.get(second.joinCode).participants[0].sessionId, second.id);
+});
+
+test('host session listing is scoped by owner and optionally quiz', () => {
+  const service = fixture();
+  const space = service.create({ quizId: 'quiz-space' }, 'creator-1');
+  service.create({ quizId: 'quiz-history' }, 'creator-1');
+  service.create({ quizId: 'quiz-space' }, 'creator-2');
+
+  assert.deepEqual(service.list({ hostId: 'creator-1', quizId: 'quiz-space' }).map(({ id }) => id), [space.id]);
+  assert.equal(service.list({ hostId: 'creator-1' }).length, 2);
+  assert.throws(() => service.list(), /authorization/);
+});
+
 test('lobby accepts 50 players and rejects duplicates or overflow', () => {
   const service = fixture();
   const room = service.create({ quizId: 'quiz-space' });
