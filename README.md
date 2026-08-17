@@ -167,3 +167,10 @@ start/end/cancel controls. Completed sessions show the winner and open a full ra
 Important edges: empty and long player names stay contained, tied scores share a rank, cancelled
 sessions have no fabricated standings, and stale simultaneous controls refresh instead of applying
 twice. Restarting the harness restores the representative data.
+
+From an active card, select **Open display**, then start the game. In host-controlled mode the
+display shows each question and keeps **Next question** locked until **Harness: reveal player
+results** supplies representative answers. Each reveal shows every player’s points for that
+question and the cumulative leaderboard; after the second reveal, complete the game. Important
+edges: results cannot be recorded twice, a stale control cannot advance, and completion stays
+disabled until the final question results are visible.

@@ -26,6 +26,16 @@ button { border:0; border-radius:8px; background:var(--purple); color:white; pad
 .player { display:flex; align-items:center; justify-content:space-between; gap:10px; border:1px solid var(--line); padding:12px; border-radius:9px; }
 .player small { display:block; color:#70677d; }
 .player button { padding:5px 8px; background:#fff0f2; color:#9c2942; }
+#question-control { margin:28px 0; padding:24px; border:2px solid #d8cbed; border-radius:14px; background:#faf8ff; }
+#question-control h2 { font-size:28px; }
+.question-options { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.question-options div { padding:14px; border-radius:9px; background:white; border:1px solid var(--line); font-weight:700; }
+.score-list { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.score-list div,.leaderboard li { display:flex; justify-content:space-between; gap:12px; padding:11px 13px; background:white; border:1px solid var(--line); border-radius:8px; }
+.score-list strong { color:var(--purple); }
+.leaderboard { list-style:none; padding:0; display:grid; gap:7px; }
+.leaderboard li { display:grid; grid-template-columns:30px 1fr auto; }
+.leaderboard b { color:var(--purple); }
 #message { color:#a2223d; font-weight:700; text-align:center; }
 @media (max-width:650px) {
   header { min-height:56px; padding:8px 16px; }
@@ -43,4 +53,6 @@ button { border:0; border-radius:8px; background:var(--purple); color:white; pad
   .toolbar { display:grid; grid-template-columns:1fr 1fr; }
   .toolbar button:first-child { grid-column:1/-1; }
   .players { grid-template-columns:1fr; }
+  #question-control { padding:18px 14px; }
+  .question-options,.score-list { grid-template-columns:1fr; }
 }

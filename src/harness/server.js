@@ -50,7 +50,8 @@ export async function createHarnessServer({ clock } = {}) {
   seedHostSessions(roomService);
   const handleRoom = createRoomHandler(roomService, {
     authenticate: () => ({ id: 'user-host', displayName: 'Demo Creator' }),
-    findQuiz: (id) => store.get(id)
+    findQuiz: (id) => store.get(id),
+    createHarnessResults: representativeQuestionResults
   });
   return createServer(async (request, response) => {
     try {
@@ -158,6 +159,16 @@ export async function createHarnessServer({ clock } = {}) {
       return json(response, 500, { error: 'Internal server error' });
     }
   });
+}
+
+function representativeQuestionResults(room) {
+  const patterns = [[900, 720, 0], [1350, 0, 980]];
+  const points = patterns[room.currentQuestionIndex] ?? [];
+  return room.participants.filter(({ status }) => status !== 'removed').map((participant, index) => ({
+    participantId: participant.id,
+    points: points[index % points.length] ?? 0,
+    correct: (points[index % points.length] ?? 0) > 0
+  }));
 }
 
 function seedHostSessions(service) {

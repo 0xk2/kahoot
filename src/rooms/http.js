@@ -1,7 +1,7 @@
 import { ContractError } from '../contracts/index.js';
 import { RoomError } from './errors.js';
 
-export function createRoomHandler(service, { authenticate, findQuiz } = {}) {
+export function createRoomHandler(service, { authenticate, findQuiz, createHarnessResults } = {}) {
   return async function handle(request, response) {
     const url = new URL(request.url, 'http://localhost');
     try {
@@ -27,6 +27,13 @@ export function createRoomHandler(service, { authenticate, findQuiz } = {}) {
         }));
         return json(response, 200, sessions);
       }
+      const hostRoom = url.pathname.match(/^\/api\/host\/rooms\/([A-Z0-9]{6})$/i);
+      if (request.method === 'GET' && hostRoom) {
+        const host = authenticate?.(request);
+        const room = service.list(host?.id).find(({ joinCode }) => joinCode === hostRoom[1].toUpperCase());
+        if (!room) throw new RoomError('Room not found', 404);
+        return json(response, 200, { ...room, quiz: hostQuiz(findQuiz?.(room.quizId)) });
+      }
       const match = url.pathname.match(/^\/api\/rooms\/([A-Z0-9]{6})(?:\/(.*))?$/i);
       if (!match) return false;
       const [, pin, action] = match;
@@ -35,6 +42,21 @@ export function createRoomHandler(service, { authenticate, findQuiz } = {}) {
         const host = authenticate?.(request);
         const input = await readJson(request);
         return json(response, 200, service.transition(pin, input.status, host?.id, input.expectedRevision));
+      }
+      if (request.method === 'POST' && action === 'advance') {
+        const host = authenticate?.(request);
+        const input = await readJson(request);
+        const room = service.get(pin);
+        const quiz = findQuiz?.(room.quizId);
+        if (!quiz) throw new RoomError('Quiz not found', 404);
+        return json(response, 200, service.advance(pin, host?.id, input.expectedRevision, quiz.questions.length));
+      }
+      if (request.method === 'POST' && action === 'harness/results' && createHarnessResults) {
+        const host = authenticate?.(request);
+        const input = await readJson(request);
+        const room = service.get(pin);
+        return json(response, 200, service.recordQuestionResults(pin,
+          createHarnessResults(room), host?.id, input.expectedRevision));
       }
       if (request.method === 'POST' && action === 'disconnect') {
         return json(response, 200, service.disconnect(pin, (await readJson(request)).reconnectToken));
@@ -55,6 +77,13 @@ export function createRoomHandler(service, { authenticate, findQuiz } = {}) {
 
 function quizSummary(quiz) {
   return quiz ? { id: quiz.id, title: quiz.title, questionCount: quiz.questions.length } : null;
+}
+
+function hostQuiz(quiz) {
+  return quiz ? { id: quiz.id, title: quiz.title, questions: quiz.questions.map((question) => ({
+    id: question.id, prompt: question.prompt, type: question.type, points: question.points,
+    options: question.options.map(({ id, text }) => ({ id, text }))
+  })) } : null;
 }
 
 function standings(participants) {

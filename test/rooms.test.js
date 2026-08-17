@@ -76,3 +76,19 @@ test('host session listing is owner-scoped and retains ranked scores', () => {
   assert.throws(() => service.list(), /Authentication required/);
   assert.throws(() => service.recordScore(owned.joinCode, joined.participant.id, -1), /non-negative/);
 });
+
+test('host-paced rooms reveal points before advancing questions', () => {
+  const service = fixture();
+  const room = service.create({ quizId: 'quiz-space' }, 'creator-1');
+  const ada = service.join({ joinCode: room.joinCode, nickname: 'Ada', reconnectToken: null });
+  service.transition(room.joinCode, 'active', 'creator-1', 0);
+  assert.throws(() => service.advance(room.joinCode, 'creator-1', 1, 2), /Reveal/);
+  const revealed = service.recordQuestionResults(room.joinCode,
+    [{ participantId: ada.participant.id, points: 900, correct: true }], 'creator-1', 1);
+  assert.equal(revealed.participants[0].score, 900);
+  assert.equal(revealed.questionResults[0].results[0].points, 900);
+  assert.throws(() => service.recordQuestionResults(room.joinCode,
+    [{ participantId: ada.participant.id, points: 900, correct: true }], 'creator-1', 2), /already recorded/);
+  const advanced = service.advance(room.joinCode, 'creator-1', 2, 2);
+  assert.equal(advanced.currentQuestionIndex, 1);
+});
