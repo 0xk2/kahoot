@@ -41,6 +41,14 @@ step. `npm run check` is the acceptance check and runs the complete automated te
 For tailnet access, run `HOST=$(tailscale ip -4) npm run harness` and open
 <http://sontra.tailc1c4f8.ts.net:4173>.
 
+### R7-1 retention audit harness
+
+Run `HOST=$(tailscale ip -4) npm run harness`, then open
+<http://sontra.tailc1c4f8.ts.net:4173/audit>. This direct surface bypasses authentication and links
+the representative creator, host, and player reviews while clearly identifying where their state is
+not connected. See [the revision-bounded audit](docs/RETENTION_AUDIT.md) for classifications,
+reproduction evidence, expected results, edge cases, and the exact reconciliation scope.
+
 ### R6-1 documentation harness
 
 Run `HOST=$(tailscale ip -4) npm run harness`, then open

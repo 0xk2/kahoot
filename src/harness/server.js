@@ -37,7 +37,9 @@ const liveAssets = new Map([
   ['/mobile', ['../../public/mobile.html', 'text/html; charset=utf-8']],
   ['/mobile.css', ['../../public/mobile.css', 'text/css; charset=utf-8']],
   ['/docs', ['../../public/docs.html', 'text/html; charset=utf-8']],
-  ['/docs.css', ['../../public/docs.css', 'text/css; charset=utf-8']]
+  ['/docs.css', ['../../public/docs.css', 'text/css; charset=utf-8']],
+  ['/audit', ['../../public/audit.html', 'text/html; charset=utf-8']],
+  ['/audit.css', ['../../public/audit.css', 'text/css; charset=utf-8']]
 ]);
 
 export async function createHarnessServer({ clock } = {}) {
