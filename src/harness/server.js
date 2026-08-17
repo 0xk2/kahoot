@@ -28,6 +28,9 @@ const liveAssets = new Map([
   ['/live', ['../../public/live.html', 'text/html; charset=utf-8']],
   ['/live.js', ['../../public/live.js', 'text/javascript; charset=utf-8']],
   ['/live.css', ['../../public/live.css', 'text/css; charset=utf-8']],
+  ['/host', ['../../public/host.html', 'text/html; charset=utf-8']],
+  ['/host.js', ['../../public/host.js', 'text/javascript; charset=utf-8']],
+  ['/host.css', ['../../public/host.css', 'text/css; charset=utf-8']],
   ['/concurrent', ['../../public/concurrent.html', 'text/html; charset=utf-8']],
   ['/concurrent.js', ['../../public/concurrent.js', 'text/javascript; charset=utf-8']],
   ['/concurrent.css', ['../../public/concurrent.css', 'text/css; charset=utf-8']],
@@ -49,15 +52,24 @@ export async function createHarnessServer({ clock } = {}) {
   const service = new AuthService(new AuthRepository(database));
   await service.register({ username: 'demo_creator', password: 'correct horse battery staple', displayName: 'Demo Creator' });
   const handleAuth = createAuthHandler(service);
-  const handleRoom = createRoomHandler(new RoomService({ clock: clock ? () => new Date(clock()) : undefined }), {
+  const roomService = new RoomService({ clock: clock ? () => new Date(clock()) : undefined });
+  let hostSessionsSeeded = false;
+  const ensureHostSessions = () => {
+    if (hostSessionsSeeded) return;
+    seedHostSessions(roomService);
+    hostSessionsSeeded = true;
+  };
+  const handleRoom = createRoomHandler(roomService, {
     authenticate: () => ({ id: 'user-host', displayName: 'Demo Creator' }),
-    findQuiz: (id) => store.get(id)
+    findQuiz: (id) => store.get(id),
+    createHarnessResults: representativeQuestionResults
   });
   return createServer(async (request, response) => {
     try {
+      const pathname = new URL(request.url, 'http://localhost').pathname;
+      if (pathname === '/host' || pathname.startsWith('/api/host/')) ensureHostSessions();
       if (await handleAuth(request, response)) return;
       if (await handleRoom(request, response)) return;
-      const pathname = new URL(request.url, 'http://localhost').pathname;
       if (request.method === 'GET' && liveAssets.has(pathname)) {
         const [path, contentType] = liveAssets.get(pathname);
         return send(response, 200, await readFile(new URL(path, import.meta.url), 'utf8'), contentType);
@@ -159,6 +171,31 @@ export async function createHarnessServer({ clock } = {}) {
       return json(response, 500, { error: 'Internal server error' });
     }
   });
+}
+
+function representativeQuestionResults(room) {
+  const patterns = [[900, 720, 0], [1350, 0, 980]];
+  const points = patterns[room.currentQuestionIndex] ?? [];
+  return room.participants.filter(({ status }) => status !== 'removed').map((participant, index) => ({
+    participantId: participant.id,
+    points: points[index % points.length] ?? 0,
+    correct: (points[index % points.length] ?? 0) > 0
+  }));
+}
+
+function seedHostSessions(service) {
+  const past = service.create({ quizId: 'quiz-space' }, 'user-host');
+  const players = [
+    service.join({ joinCode: past.joinCode, nickname: 'Maya', reconnectToken: null }),
+    service.join({ joinCode: past.joinCode, nickname: 'Theo', reconnectToken: null }),
+    service.join({ joinCode: past.joinCode, nickname: 'Iris', reconnectToken: null })
+  ];
+  service.transition(past.joinCode, 'active', 'user-host', 0);
+  [4200, 3650, 3650].forEach((score, index) => service.recordScore(past.joinCode, players[index].participant.id, score));
+  service.transition(past.joinCode, 'completed', 'user-host', 1);
+  const active = service.create({ quizId: 'quiz-space' }, 'user-host');
+  ['Nova', 'Sol', 'Long Team Name Testing Containment'].forEach((nickname) =>
+    service.join({ joinCode: active.joinCode, nickname, reconnectToken: null }));
 }
 
 function send(response, status, body, contentType) {

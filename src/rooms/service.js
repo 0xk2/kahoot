@@ -19,7 +19,7 @@ export class RoomService {
     const joinCode = this.#uniquePin();
     const createdAt = this.clock().toISOString();
     const room = { id: randomUUID(), quizId, hostId, joinCode, origin, status: 'lobby', revision: 0,
-      currentQuestionIndex: null, createdAt, startedAt: null, endedAt: null, participants: new Map() };
+      currentQuestionIndex: null, questionResults: [], createdAt, startedAt: null, endedAt: null, participants: new Map() };
     this.rooms.set(joinCode, room);
     return this.snapshot(room);
   }
@@ -81,13 +81,57 @@ export class RoomService {
       .map((room) => this.snapshot(room)));
   }
 
+  recordScore(joinCode, participantId, score) {
+    const participant = this.#room(joinCode).participants.get(participantId);
+    if (!participant) throw new RoomError('Player not found', 404);
+    if (!Number.isSafeInteger(score) || score < 0) throw new RoomError('Score must be a non-negative integer');
+    participant.score = score;
+    return publicParticipant(participant);
+  }
+
+  recordQuestionResults(joinCode, results, hostId, expectedRevision) {
+    const room = this.#room(joinCode);
+    this.#authorizeHost(room, hostId, expectedRevision);
+    if (room.status !== 'active') throw new RoomError('Question results require an active game', 409);
+    if (room.questionResults.some(({ questionIndex }) => questionIndex === room.currentQuestionIndex)) {
+      throw new RoomError('Results are already recorded for this question', 409);
+    }
+    const activeIds = new Set([...room.participants.values()]
+      .filter(({ status }) => status !== 'removed').map(({ id }) => id));
+    if (!Array.isArray(results) || results.length !== activeIds.size) throw new RoomError('Results must include every player');
+    const seen = new Set();
+    const normalized = results.map(({ participantId, points, correct }) => {
+      if (!activeIds.has(participantId) || seen.has(participantId)) throw new RoomError('Results contain an invalid player');
+      if (!Number.isSafeInteger(points) || points < 0 || typeof correct !== 'boolean') throw new RoomError('Result points are invalid');
+      seen.add(participantId);
+      room.participants.get(participantId).score += points;
+      return Object.freeze({ participantId, points, correct });
+    });
+    room.questionResults.push(Object.freeze({ questionIndex: room.currentQuestionIndex, results: Object.freeze(normalized) }));
+    room.revision += 1;
+    return this.snapshot(room);
+  }
+
+  advance(joinCode, hostId, expectedRevision, questionCount) {
+    const room = this.#room(joinCode);
+    this.#authorizeHost(room, hostId, expectedRevision);
+    if (room.status !== 'active') throw new RoomError('Only active games can advance', 409);
+    if (!room.questionResults.some(({ questionIndex }) => questionIndex === room.currentQuestionIndex)) {
+      throw new RoomError('Reveal this question’s results before advancing', 409);
+    }
+    if (room.currentQuestionIndex >= questionCount - 1) throw new RoomError('Complete the game after the final question', 409);
+    room.currentQuestionIndex += 1;
+    room.revision += 1;
+    return this.snapshot(room);
+  }
   snapshot(room) {
     const joinUrl = `${room.origin}/live?pin=${room.joinCode}`;
     return Object.freeze({ id: room.id, quizId: room.quizId, joinCode: room.joinCode, revision: room.revision,
       status: room.status, currentQuestionIndex: room.currentQuestionIndex, createdAt: room.createdAt,
       startedAt: room.startedAt, endedAt: room.endedAt, maxPlayers: this.maxPlayers, joinUrl,
       qrImageUrl: `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(joinUrl)}`,
-      participants: Object.freeze([...room.participants.values()].map(publicParticipant)) });
+      participants: Object.freeze([...room.participants.values()].map(publicParticipant)),
+      questionResults: Object.freeze([...room.questionResults]) });
   }
 
   #reconnect(room, token) {

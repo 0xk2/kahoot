@@ -186,6 +186,26 @@ respect device safe areas. Important edges: open the creator question editor, cr
 add several players, complete both single- and multiple-choice player questions, rotate a
 short-height phone, and enable large browser text.
 
+### R5-2 host session hub harness
+
+Run `HOST=$(tailscale ip -4) npm run harness`, then open
+<http://sontra.tailc1c4f8.ts.net:4173/host>. Authentication is bypassed only by this local surface,
+which supplies the representative `Demo Creator` identity. The hub starts with a three-player lobby
+and a completed session with deterministic scores, including a tie for second place.
+
+Expected result: active sessions show their PIN, player count, status, live-display link, and valid
+start/end/cancel controls. Completed sessions show the winner and open a full ranked result dialog.
+Important edges: empty and long player names stay contained, tied scores share a rank, cancelled
+sessions have no fabricated standings, and stale simultaneous controls refresh instead of applying
+twice. Restarting the harness restores the representative data.
+
+From an active card, select **Open display**, then start the game. In host-controlled mode the
+display shows each question and keeps **Next question** locked until **Harness: reveal player
+results** supplies representative answers. Each reveal shows every player’s points for that
+question and the cumulative leaderboard; after the second reveal, complete the game. Important
+edges: results cannot be recorded twice, a stale control cannot advance, and completion stays
+disabled until the final question results are visible.
+
 ### R5-1 concurrent session harness
 
 Run `HOST=$(tailscale ip -4) npm run harness`, then open

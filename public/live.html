@@ -17,6 +17,11 @@
     <section id="host" class="panel" hidden>
       <p class="eyebrow">Host lobby</p><div class="room-head"><div><h1>Game PIN <strong id="host-pin"></strong></h1><a id="join-link"></a></div><img id="qr" alt="QR code linking to this room"></div>
       <p id="host-status" class="status"></p><div class="toolbar"><button id="start">Start game</button><button id="complete">Complete game</button><button id="cancel" class="secondary">Cancel room</button></div>
+      <section id="question-control" hidden>
+        <p class="eyebrow" id="question-number"></p><h2 id="question-prompt"></h2><div id="question-options" class="question-options"></div>
+        <div class="toolbar"><button id="reveal">Harness: reveal player results</button><button id="next">Next question →</button></div>
+        <div id="question-results" hidden><h3>Points this question</h3><div id="points-list" class="score-list"></div><h3>Leaderboard</h3><ol id="leaderboard" class="leaderboard"></ol></div>
+      </section>
       <h2>Players <span id="count"></span></h2><div id="players" class="players"></div>
     </section>
     <section id="player" class="panel" hidden>

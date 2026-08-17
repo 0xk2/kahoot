@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Live sessions | Quizzes</title><link rel="stylesheet" href="/host.css">
+</head>
+<body>
+  <header><a class="brand" href="/" aria-label="Quizzes home"><span>Q</span> Quizzes</a><nav><a href="/creator">My quizzes</a><a class="current" href="/host">Live sessions</a></nav><div class="avatar">DC</div></header>
+  <div class="harness">R5-2 host hub test harness · Demo Creator supplied without sign-in</div>
+  <main>
+    <div class="heading"><div><p class="eyebrow">Host workspace</p><h1>Live sessions</h1><p>Run current games and review how every session finished.</p></div><a class="primary" href="/creator">＋ Host a quiz</a></div>
+    <p id="message" role="status" aria-live="polite"></p>
+    <section aria-labelledby="active-title"><div class="section-title"><h2 id="active-title">Active sessions</h2><span id="active-count"></span></div><div id="active" class="session-grid"></div></section>
+    <section aria-labelledby="past-title"><div class="section-title"><h2 id="past-title">Past results</h2><span id="past-count"></span></div><div id="past" class="results"></div></section>
+  </main>
+  <dialog id="result-dialog"><div class="dialog-head"><div><p class="eyebrow">Session results</p><h2 id="result-title"></h2></div><button id="close" aria-label="Close results">×</button></div><div id="result-summary"></div><ol id="standings"></ol></dialog>
+  <script type="module" src="/host.js"></script>
+</body>
+</html>
