@@ -1,0 +1,10 @@
+:root { color-scheme: dark; font-family: system-ui, sans-serif; background:#15132b; color:#f8f7ff }
+body { margin:0; padding:clamp(1rem, 5vw, 4rem) }
+main { max-width:760px; margin:auto }
+.eyebrow { color:#b8afff; font-weight:700 }
+h1 { font-size:clamp(2rem, 7vw, 4rem); margin:.2em 0 }
+section { background:#242044; border:1px solid #4b4381; border-radius:1rem; margin:1rem 0; padding:1rem 1.25rem }
+nav { display:grid; gap:.75rem }
+a { color:#cfc9ff; min-height:44px; display:inline-flex; align-items:center }
+li { margin:.65rem 0; line-height:1.5 }
+code { overflow-wrap:anywhere }
