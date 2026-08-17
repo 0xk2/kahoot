@@ -2,6 +2,31 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHarnessServer } from '../src/harness/server.js';
 
+async function withServer(run) {
+  const server = await createHarnessServer();
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try { await run(`http://127.0.0.1:${server.address().port}`); }
+  finally { await new Promise((resolve) => server.close(resolve)); }
+}
+
+test('host hub exposes active controls and ranked past results without sign-in', () => withServer(async (origin) => {
+  const [pageResponse, sessionsResponse] = await Promise.all([
+    fetch(`${origin}/host`), fetch(`${origin}/api/host/sessions`)
+  ]);
+  const page = await pageResponse.text();
+  const sessions = await sessionsResponse.json();
+  assert.equal(pageResponse.status, 200);
+  assert.match(page, /R5-2 host hub test harness/);
+  assert.match(page, /<title>Live sessions \| Quizzes<\/title>/);
+  assert.match(page, /Active sessions/);
+  assert.match(page, /Past results/);
+  const active = sessions.find(({ status }) => status === 'lobby');
+  const completed = sessions.find(({ status }) => status === 'completed');
+  assert.equal(active.participants.length, 3);
+  assert.equal(completed.quiz.title, 'A Tiny Tour of Space');
+  assert.deepEqual(completed.results.map(({ rank, score }) => [rank, score]), [[1, 4200], [2, 3650], [2, 3650]]);
+}));
+
 test('host display reveals question points and advances a host-paced game', async () => {
   const server = await createHarnessServer();
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));

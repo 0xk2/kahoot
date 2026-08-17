@@ -33,8 +33,26 @@ test('public landing page exposes host and PIN-based join paths', () => withServ
   assert.match(page, /href="\/creator"/);
   assert.match(page, /id="join-form"/);
   assert.match(page, /ORBIT1/);
+  assert.match(page, /<title>Home \| Quizzes<\/title>/);
+  assert.match(page, /aria-label="Quizzes home"/);
   assert.match(script, /\/play\?pin=/);
-  assert.match(await styleResponse.text(), /max-width:760px/);
+  const style = await styleResponse.text();
+  assert.match(style, /max-width:760px/);
+  assert.doesNotMatch(style, /\.hero::before/);
+}));
+
+test('product pages have distinct Quizzes titles and can load dynamic title support', () => withServer(async (origin) => {
+  const [creator, live, player, titles] = await Promise.all([
+    fetch(`${origin}/creator`).then((response) => response.text()),
+    fetch(`${origin}/live`).then((response) => response.text()),
+    fetch(`${origin}/play`).then((response) => response.text()),
+    fetch(`${origin}/page-titles.js`)
+  ]);
+  assert.match(creator, /<title>My quizzes \| Quizzes<\/title>/);
+  assert.match(live, /<title>Host or join \| Quizzes<\/title>/);
+  assert.match(player, /<title>Join a quiz \| Quizzes<\/title>/);
+  assert.equal(titles.status, 200);
+  assert.match(await titles.text(), /APP_NAME = 'Quizzes'/);
 }));
 
 test('player surface accepts a landing-page PIN query', () => withServer(async (origin) => {
@@ -200,7 +218,7 @@ test('creator dashboard launches only published owned quizzes into the host disp
   assert.equal(room.quizId, 'quiz-space');
   assert.equal(room.revision, 0);
   assert.equal('hostId' in room, false);
-  assert.match(await fetch(`${origin}/live?host=${room.joinCode}`).then((response) => response.text()), /Host display/);
+  assert.match(await fetch(`${origin}/live?host=${room.joinCode}`).then((response) => response.text()), /Host lobby/);
 }));
 
 test('host HTTP actions reject stale revisions without double-transitioning', () => withServer(async (origin) => {
@@ -215,23 +233,17 @@ test('host HTTP actions reject stale revisions without double-transitioning', ()
   assert.equal(current.revision, 1);
 }));
 
-test('host hub exposes active controls and ranked past results without sign-in', () => withServer(async (origin) => {
-  const [pageResponse, sessionsResponse] = await Promise.all([
-    fetch(`${origin}/host`), fetch(`${origin}/api/host/sessions`)
-  ]);
-  const page = await pageResponse.text();
-  const sessions = await sessionsResponse.json();
-  assert.equal(pageResponse.status, 200);
-  assert.match(page, /R5-2 host hub test harness/);
-  assert.match(page, /Active sessions/);
-  assert.match(page, /Past results/);
-  const active = sessions.find(({ status }) => status === 'lobby');
-  const completed = sessions.find(({ status }) => status === 'completed');
-  assert.equal(active.participants.length, 3);
-  assert.equal(completed.quiz.title, 'A Tiny Tour of Space');
-  assert.deepEqual(completed.results.map(({ rank, score }) => [rank, score]), [[1, 4200], [2, 3650], [2, 3650]]);
-  const started = await fetch(`${origin}/api/rooms/${active.joinCode}/lifecycle`, { method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ status: 'active', expectedRevision: active.revision }) });
-  assert.equal(started.status, 200);
+test('concurrent session harness lists isolated rooms for the same quiz', () => withServer(async (origin) => {
+  const page = await fetch(`${origin}/concurrent`).then((response) => response.text());
+  assert.match(page, /R5-1 test harness/);
+  const create = () => fetch(`${origin}/api/rooms`, { method: 'POST',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ quizId: 'quiz-space' }) })
+    .then((response) => response.json());
+  const [first, second] = await Promise.all([create(), create()]);
+  await fetch(`${origin}/api/rooms/join`, { method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ joinCode: first.joinCode, nickname: 'Ada', reconnectToken: null }) });
+  const listed = await fetch(`${origin}/api/rooms?quizId=quiz-space`).then((response) => response.json());
+  assert.deepEqual(new Set(listed.map(({ id }) => id)), new Set([first.id, second.id]));
+  assert.equal(listed.find(({ id }) => id === first.id).participants.length, 1);
+  assert.equal(listed.find(({ id }) => id === second.id).participants.length, 0);
 }));

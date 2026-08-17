@@ -1,0 +1,16 @@
+:root { font-family: Inter, system-ui, sans-serif; color: #172033; background: #f2f5fb; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { width: min(960px, calc(100% - 32px)); margin: 48px auto; }
+h1 { font-size: clamp(2rem, 6vw, 4rem); margin: 4px 0 12px; }
+.eyebrow { color: #6254d9; font-size: .78rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.toolbar, .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+button, a { border: 0; border-radius: 10px; padding: 11px 15px; background: #6254d9; color: white; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; }
+button.secondary { background: white; color: #172033; border: 1px solid #cbd3e1; }
+#message { min-height: 24px; color: #46536b; }
+#sessions { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 18px; }
+article, .empty { background: white; border: 1px solid #dce2ec; border-radius: 18px; padding: 22px; box-shadow: 0 8px 24px #1720330d; }
+article h2 { font-size: 2rem; letter-spacing: .12em; margin: 4px 0; }
+ul { min-height: 40px; padding-left: 20px; }
+small { color: #68748a; }
+@media (max-width: 520px) { main { margin: 24px auto; } button, a { min-height: 44px; flex: 1; text-align: center; } }

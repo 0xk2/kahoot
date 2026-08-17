@@ -22,6 +22,7 @@ const playerPageUrl = new URL('../../public/player.html', import.meta.url);
 const playerScriptUrl = new URL('../../public/player.js', import.meta.url);
 const playerStyleUrl = new URL('../../public/player.css', import.meta.url);
 const liveAssets = new Map([
+  ['/page-titles.js', ['../../public/page-titles.js', 'text/javascript; charset=utf-8']],
   ['/landing.js', ['../../public/landing.js', 'text/javascript; charset=utf-8']],
   ['/landing.css', ['../../public/landing.css', 'text/css; charset=utf-8']],
   ['/live', ['../../public/live.html', 'text/html; charset=utf-8']],
@@ -30,6 +31,9 @@ const liveAssets = new Map([
   ['/host', ['../../public/host.html', 'text/html; charset=utf-8']],
   ['/host.js', ['../../public/host.js', 'text/javascript; charset=utf-8']],
   ['/host.css', ['../../public/host.css', 'text/css; charset=utf-8']],
+  ['/concurrent', ['../../public/concurrent.html', 'text/html; charset=utf-8']],
+  ['/concurrent.js', ['../../public/concurrent.js', 'text/javascript; charset=utf-8']],
+  ['/concurrent.css', ['../../public/concurrent.css', 'text/css; charset=utf-8']],
   ['/mobile', ['../../public/mobile.html', 'text/html; charset=utf-8']],
   ['/mobile.css', ['../../public/mobile.css', 'text/css; charset=utf-8']]
 ]);
@@ -47,7 +51,12 @@ export async function createHarnessServer({ clock } = {}) {
   await service.register({ username: 'demo_creator', password: 'correct horse battery staple', displayName: 'Demo Creator' });
   const handleAuth = createAuthHandler(service);
   const roomService = new RoomService({ clock: clock ? () => new Date(clock()) : undefined });
-  seedHostSessions(roomService);
+  let hostSessionsSeeded = false;
+  const ensureHostSessions = () => {
+    if (hostSessionsSeeded) return;
+    seedHostSessions(roomService);
+    hostSessionsSeeded = true;
+  };
   const handleRoom = createRoomHandler(roomService, {
     authenticate: () => ({ id: 'user-host', displayName: 'Demo Creator' }),
     findQuiz: (id) => store.get(id),
@@ -55,9 +64,10 @@ export async function createHarnessServer({ clock } = {}) {
   });
   return createServer(async (request, response) => {
     try {
+      const pathname = new URL(request.url, 'http://localhost').pathname;
+      if (pathname === '/host' || pathname.startsWith('/api/host/')) ensureHostSessions();
       if (await handleAuth(request, response)) return;
       if (await handleRoom(request, response)) return;
-      const pathname = new URL(request.url, 'http://localhost').pathname;
       if (request.method === 'GET' && liveAssets.has(pathname)) {
         const [path, contentType] = liveAssets.get(pathname);
         return send(response, 200, await readFile(new URL(path, import.meta.url), 'utf8'), contentType);

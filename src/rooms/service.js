@@ -73,10 +73,10 @@ export class RoomService {
 
   get(joinCode) { return this.snapshot(this.#room(joinCode)); }
 
-  list(hostId) {
-    if (!hostId) throw new RoomError('Authentication required', 401);
+  list({ hostId, quizId } = {}) {
+    if (!hostId) throw new RoomError('Host authorization required', 403);
     return Object.freeze([...this.rooms.values()]
-      .filter((room) => room.hostId === hostId)
+      .filter((room) => room.hostId === hostId && (!quizId || room.quizId === quizId))
       .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
       .map((room) => this.snapshot(room)));
   }
@@ -124,7 +124,6 @@ export class RoomService {
     room.revision += 1;
     return this.snapshot(room);
   }
-
   snapshot(room) {
     const joinUrl = `${room.origin}/live?pin=${room.joinCode}`;
     return Object.freeze({ id: room.id, quizId: room.quizId, joinCode: room.joinCode, revision: room.revision,

@@ -1,3 +1,5 @@
+import { pageTitle } from './page-titles.js';
+
 const $ = (selector) => document.querySelector(selector);
 let role;
 let pin;
@@ -36,6 +38,7 @@ async function join(joinCode, nickname, reconnectToken) {
 }
 
 function renderHost(room) {
+  document.title = pageTitle(`Host ${room.joinCode}`);
   sessionStorage.setItem(`host:${room.joinCode}`, String(room.revision));
   $('#host-pin').textContent = room.joinCode; $('#join-link').textContent = room.joinUrl;
   $('#join-link').href = room.joinUrl; $('#qr').src = room.qrImageUrl;
@@ -69,6 +72,7 @@ function renderQuestion(room) {
 }
 
 function renderPlayer(room, nickname) {
+  document.title = pageTitle(`Lobby ${room.joinCode}`);
   $('#player-title').textContent = `${nickname}, you’re in!`;
   $('#player-status').textContent = statusText(room);
   $('#disconnect').disabled = !['lobby', 'active'].includes(room.status);

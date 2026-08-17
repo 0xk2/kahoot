@@ -15,12 +15,17 @@ export function createRoomHandler(service, { authenticate, findQuiz, createHarne
         const origin = `http://${request.headers.host}`;
         return json(response, 201, service.create(input, host.id, origin));
       }
+      if (request.method === 'GET' && url.pathname === '/api/rooms') {
+        const host = authenticate?.(request);
+        return json(response, 200, service.list({ hostId: host?.id,
+          quizId: url.searchParams.get('quizId') || undefined }));
+      }
       if (request.method === 'POST' && url.pathname === '/api/rooms/join') {
         return json(response, 200, service.join(await readJson(request)));
       }
       if (request.method === 'GET' && url.pathname === '/api/host/sessions') {
         const host = authenticate?.(request);
-        const sessions = service.list(host?.id).map((room) => ({
+        const sessions = service.list({ hostId: host?.id }).map((room) => ({
           ...room,
           quiz: quizSummary(findQuiz?.(room.quizId)),
           results: room.status === 'completed' ? standings(room.participants) : null
@@ -30,7 +35,8 @@ export function createRoomHandler(service, { authenticate, findQuiz, createHarne
       const hostRoom = url.pathname.match(/^\/api\/host\/rooms\/([A-Z0-9]{6})$/i);
       if (request.method === 'GET' && hostRoom) {
         const host = authenticate?.(request);
-        const room = service.list(host?.id).find(({ joinCode }) => joinCode === hostRoom[1].toUpperCase());
+        const room = service.list({ hostId: host?.id })
+          .find(({ joinCode }) => joinCode === hostRoom[1].toUpperCase());
         if (!room) throw new RoomError('Room not found', 404);
         return json(response, 200, { ...room, quiz: hostQuiz(findQuiz?.(room.quizId)) });
       }
