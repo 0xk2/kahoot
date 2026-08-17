@@ -1,3 +1,5 @@
+import { pageTitle } from './page-titles.js';
+
 const $ = (selector) => document.querySelector(selector);
 const libraryView = $('#library-view');
 const editorView = $('#editor-view');
@@ -13,6 +15,7 @@ async function request(url, options) {
 }
 
 async function loadLibrary() {
+  document.title = pageTitle('My quizzes');
   const params = new URLSearchParams({ search: $('#search').value, status: $('#status').value, sort: $('#sort').value });
   const quizzes = await request(`/api/creator/quizzes?${params}`);
   $('#library-count').textContent = `${quizzes.length} ${quizzes.length === 1 ? 'quiz' : 'quizzes'}`;
@@ -42,6 +45,7 @@ async function openEditor(id) {
 }
 
 function renderEditor() {
+  document.title = pageTitle(`Edit ${quiz.title}`);
   $('#quiz-title').value = quiz.title;
   $('#quiz-description').value = quiz.description ?? '';
   $('#quiz-status').textContent = quiz.status;

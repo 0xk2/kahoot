@@ -1,4 +1,4 @@
-# kahoot
+# Quizzes
 
 A multiplayer quiz project managed through ShipLoop.
 
@@ -34,6 +34,19 @@ npm run harness
 
 For tailnet access, run `HOST=$(tailscale ip -4) npm run harness` and open
 <http://sontra.tailc1c4f8.ts.net:4173>.
+
+### R4-1 naming and page-title harness
+
+Run `HOST=$(tailscale ip -4) npm run harness`, then open
+<http://sontra.tailc1c4f8.ts.net:4173/>. This direct public surface needs no account and uses the
+representative `ORBIT1` room and mock quiz library already provided by the isolated harness. Follow
+the creator, host, and player paths and confirm that the shared brand reads **Quizzes** while each
+browser tab identifies its current page or view.
+
+Expected result: the home, quiz library, creator editor, host/join lobby, player question, feedback,
+and final leaderboard views have distinct titles ending in `| Quizzes`. Important edges: returning
+from the editor restores the library title, opening different quizzes includes the selected quiz
+name, and host/player lobby titles include the room PIN. Restarting the harness resets all data.
 
 ### R3-1 public landing-page harness
 
