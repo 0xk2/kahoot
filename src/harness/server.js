@@ -35,7 +35,9 @@ const liveAssets = new Map([
   ['/concurrent.js', ['../../public/concurrent.js', 'text/javascript; charset=utf-8']],
   ['/concurrent.css', ['../../public/concurrent.css', 'text/css; charset=utf-8']],
   ['/mobile', ['../../public/mobile.html', 'text/html; charset=utf-8']],
-  ['/mobile.css', ['../../public/mobile.css', 'text/css; charset=utf-8']]
+  ['/mobile.css', ['../../public/mobile.css', 'text/css; charset=utf-8']],
+  ['/docs', ['../../public/docs.html', 'text/html; charset=utf-8']],
+  ['/docs.css', ['../../public/docs.css', 'text/css; charset=utf-8']]
 ]);
 
 export async function createHarnessServer({ clock } = {}) {
