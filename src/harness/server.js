@@ -28,6 +28,9 @@ const liveAssets = new Map([
   ['/live', ['../../public/live.html', 'text/html; charset=utf-8']],
   ['/live.js', ['../../public/live.js', 'text/javascript; charset=utf-8']],
   ['/live.css', ['../../public/live.css', 'text/css; charset=utf-8']],
+  ['/concurrent', ['../../public/concurrent.html', 'text/html; charset=utf-8']],
+  ['/concurrent.js', ['../../public/concurrent.js', 'text/javascript; charset=utf-8']],
+  ['/concurrent.css', ['../../public/concurrent.css', 'text/css; charset=utf-8']],
   ['/mobile', ['../../public/mobile.html', 'text/html; charset=utf-8']],
   ['/mobile.css', ['../../public/mobile.css', 'text/css; charset=utf-8']]
 ]);

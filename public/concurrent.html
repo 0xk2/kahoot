@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Concurrent session harness</title>
+  <link rel="stylesheet" href="/concurrent.css">
+</head>
+<body>
+  <main>
+    <p class="eyebrow">R5-1 test harness · auth bypassed</p>
+    <h1>Concurrent live sessions</h1>
+    <p>Launch two independent rooms for the same published Space quiz. Each card controls and displays only its own room.</p>
+    <div class="toolbar">
+      <button id="launch">Launch two sessions</button>
+      <button id="refresh" class="secondary">Refresh sessions</button>
+    </div>
+    <p id="message" role="status"></p>
+    <section id="sessions" aria-live="polite"></section>
+  </main>
+  <script type="module" src="/concurrent.js"></script>
+</body>
+</html>

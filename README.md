@@ -167,3 +167,15 @@ tappable; long titles, answers, nicknames, and room details stay contained; and 
 respect device safe areas. Important edges: open the creator question editor, create a host room and
 add several players, complete both single- and multiple-choice player questions, rotate a
 short-height phone, and enable large browser text.
+
+### R5-1 concurrent session harness
+
+Run `HOST=$(tailscale ip -4) npm run harness`, then open
+<http://sontra.tailc1c4f8.ts.net:4173/concurrent>. Authentication is bypassed only on this local
+surface. Launch two sessions for the published Space quiz, add the same mock nickname to each room,
+and start or complete either room independently.
+
+Expected result: every launch receives a distinct PIN and session ID; players, lifecycle state, and
+revision changes remain confined to their own room. Refreshing lists every session owned by the
+representative creator. Important edges: the same nickname is valid in separate rooms, while a
+case-insensitive duplicate in one room is rejected; starting one room leaves the other in its lobby.

@@ -232,3 +232,18 @@ test('host HTTP actions reject stale revisions without double-transitioning', ()
   assert.equal(current.status, 'active');
   assert.equal(current.revision, 1);
 }));
+
+test('concurrent session harness lists isolated rooms for the same quiz', () => withServer(async (origin) => {
+  const page = await fetch(`${origin}/concurrent`).then((response) => response.text());
+  assert.match(page, /R5-1 test harness/);
+  const create = () => fetch(`${origin}/api/rooms`, { method: 'POST',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ quizId: 'quiz-space' }) })
+    .then((response) => response.json());
+  const [first, second] = await Promise.all([create(), create()]);
+  await fetch(`${origin}/api/rooms/join`, { method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ joinCode: first.joinCode, nickname: 'Ada', reconnectToken: null }) });
+  const listed = await fetch(`${origin}/api/rooms?quizId=quiz-space`).then((response) => response.json());
+  assert.deepEqual(new Set(listed.map(({ id }) => id)), new Set([first.id, second.id]));
+  assert.equal(listed.find(({ id }) => id === first.id).participants.length, 1);
+  assert.equal(listed.find(({ id }) => id === second.id).participants.length, 0);
+}));
