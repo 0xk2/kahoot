@@ -2,6 +2,9 @@
 
 A multiplayer quiz project managed through ShipLoop.
 
+See the [project guide](docs/PROJECT_GUIDE.md) for product functionality, architecture, technology,
+and the complete build and test workflows.
+
 ## Project information
 
 - GitHub repository: [0xk2/kahoot](https://github.com/0xk2/kahoot)
@@ -32,8 +35,23 @@ npm test
 npm run harness
 ```
 
+Quizzes uses native ES modules and browser assets directly, so there is no compilation or bundle
+step. `npm run check` is the acceptance check and runs the complete automated test suite.
+
 For tailnet access, run `HOST=$(tailscale ip -4) npm run harness` and open
 <http://sontra.tailc1c4f8.ts.net:4173>.
+
+### R6-1 documentation harness
+
+Run `HOST=$(tailscale ip -4) npm run harness`, then open
+<http://sontra.tailc1c4f8.ts.net:4173/docs>. This direct surface needs no account and summarizes
+the documented creator → host → player workflow around the representative “A Tiny Tour of Space”
+quiz. Its links open each existing interactive mock surface.
+
+Expected result: the functionality, stack, build model, automated checks, and manual review steps
+agree with `docs/PROJECT_GUIDE.md`. Important edges: draft and archived quizzes cannot be hosted,
+players do not receive correct answers before submission, duplicate room nicknames are rejected,
+and restarting the harness clears its in-memory data.
 
 ### R4-1 naming and page-title harness
 

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Project guide | Quizzes</title>
+  <link rel="stylesheet" href="/docs.css">
+</head>
+<body>
+  <header>
+    <p>R6-1 documentation harness · no account required</p>
+    <h1>How Quizzes fits together</h1>
+    <p class="lede">Review the product journey and engineering workflow with the representative
+      <strong>A Tiny Tour of Space</strong> quiz and room PIN <strong>ORBIT1</strong>.</p>
+  </header>
+  <main>
+    <section aria-labelledby="journey-heading">
+      <h2 id="journey-heading">Product journey</h2>
+      <div class="cards">
+        <article><span>01</span><h3>Create</h3><p>Author validated single- and multiple-choice questions, then publish the quiz.</p><a href="/creator">Open creator →</a></article>
+        <article><span>02</span><h3>Host</h3><p>Launch an isolated room, share its PIN, manage players, and control its lifecycle.</p><a href="/live">Open host →</a></article>
+        <article><span>03</span><h3>Play</h3><p>Join anonymously, answer timed questions, read feedback, and view rankings.</p><a href="/play?pin=ORBIT1">Open player →</a></article>
+      </div>
+    </section>
+    <section class="facts" aria-labelledby="engineering-heading">
+      <h2 id="engineering-heading">Engineering at a glance</h2>
+      <dl>
+        <div><dt>Runtime</dt><dd>Node.js 22+, native ES modules</dd></div>
+        <div><dt>Data</dt><dd>Portable SQLite schema; in-memory harness</dd></div>
+        <div><dt>Frontend</dt><dd>Native HTML, CSS, and browser JavaScript</dd></div>
+        <div><dt>Build</dt><dd>No compile or bundle step</dd></div>
+        <div><dt>Automated test</dt><dd><code>npm test</code> using <code>node:test</code></dd></div>
+        <div><dt>Acceptance check</dt><dd><code>npm run check</code></dd></div>
+      </dl>
+    </section>
+    <section class="review" aria-labelledby="review-heading">
+      <h2 id="review-heading">Review boundaries</h2>
+      <ul><li>Only published quizzes launch.</li><li>Correct answers stay private until feedback.</li><li>Room state remains isolated across concurrent sessions.</li><li>Restarting the harness clears all representative data.</li></ul>
+      <p>Implementation details and full workflows are maintained in <code>docs/PROJECT_GUIDE.md</code>.</p>
+    </section>
+  </main>
+</body>
+</html>
