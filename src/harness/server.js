@@ -22,6 +22,7 @@ const playerPageUrl = new URL('../../public/player.html', import.meta.url);
 const playerScriptUrl = new URL('../../public/player.js', import.meta.url);
 const playerStyleUrl = new URL('../../public/player.css', import.meta.url);
 const liveAssets = new Map([
+  ['/page-titles.js', ['../../public/page-titles.js', 'text/javascript; charset=utf-8']],
   ['/landing.js', ['../../public/landing.js', 'text/javascript; charset=utf-8']],
   ['/landing.css', ['../../public/landing.css', 'text/css; charset=utf-8']],
   ['/live', ['../../public/live.html', 'text/html; charset=utf-8']],
