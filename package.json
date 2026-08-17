@@ -6,7 +6,8 @@
   "scripts": {
     "check": "npm run test",
     "test": "node --test",
-    "harness": "node src/harness/server.js"
+    "harness": "node src/harness/server.js",
+    "start": "node src/server.js"
   },
   "engines": {
     "node": ">=22"

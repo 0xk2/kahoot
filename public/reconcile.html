@@ -1,0 +1,12 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>R7-2 review | Quizzes</title><link rel="stylesheet" href="/audit.css"></head><body><main>
+<p class="eyebrow">R7-2 review harness · representative data · authentication bypassed</p><h1>Reconciled Quizzes review</h1>
+<p>This isolated harness keeps its mock Space quiz and Demo Creator outside production. Use it to review retained responsive creator, host, and player layouts without creating an account.</p>
+<section><h2>Desktop and mobile surfaces</h2><nav><a href="/creator">1. Author and publish A Tiny Tour of Space</a>
+<a href="/host">2. Review active and completed host sessions</a><a href="/play?pin=ORBIT1">3. Play by PIN with feedback and standings</a>
+<a href="/mobile">4. Open the 320–430 px review checklist</a></nav></section>
+<section><h2>Canonical production evidence</h2><ul><li><code>npm start</code> requires explicit durable SQLite storage.</li>
+<li>Creator and host APIs require the real <code>kahoot_session</code> cookie.</li><li>Production does not serve this page or any mock/reset/rival/result APIs.</li>
+<li><code>npm run check</code> exercises publish → room → answer → restart → history through one database.</li></ul></section>
+<p>Edges: draft/archived launch rejection, owner and revision checks, reconnect tokens, duplicate room nicknames, timed expiry, ties, concurrent rooms, long content, and narrow/landscape layouts.</p>
+</main></body></html>

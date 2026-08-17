@@ -41,6 +41,25 @@ step. `npm run check` is the acceptance check and runs the complete automated te
 For tailnet access, run `HOST=$(tailscale ip -4) npm run harness` and open
 <http://sontra.tailc1c4f8.ts.net:4173>.
 
+### Production runtime
+
+The canonical server never seeds data or enables harness routes. It requires an explicit durable
+SQLite location outside the checkout and can report the deployed revision:
+
+```sh
+QUIZZES_DATABASE=/var/lib/quizzes/runtime.sqlite APP_REVISION=$(git rev-parse HEAD) npm start
+curl http://127.0.0.1:3000/api/revision
+```
+
+### R7-2 reconciliation harness
+
+Run `HOST=$(tailscale ip -4) npm run harness`, then open
+<http://sontra.tailc1c4f8.ts.net:4173/reconcile>. The direct review hub bypasses authentication only
+inside the harness and links the representative creator, host, player, and mobile surfaces. Expect
+the Space quiz, isolated sessions, feedback/standings, and responsive layouts to remain available;
+restarting restores mock data. Production proof is covered by `test/production-flow.test.js`, which
+uses a temporary file-backed database and a real creator session across a server restart.
+
 ### R7-1 retention audit harness
 
 Run `HOST=$(tailscale ip -4) npm run harness`, then open

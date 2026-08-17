@@ -26,7 +26,7 @@
     <section id="editor-view" hidden>
       <div class="editor-top"><button class="quiet" id="back">← Library</button><span id="save-state">All changes saved</span><button class="primary" id="save">Save quiz</button></div>
       <form id="editor-form">
-        <div class="title-row"><div><p class="eyebrow">Quiz editor</p><input id="quiz-title" class="title-input" aria-label="Quiz title" maxlength="160"><input id="quiz-description" class="description-input" aria-label="Quiz description" maxlength="1000" placeholder="Add a description"></div><span id="quiz-status" class="badge"></span></div>
+        <div class="title-row"><div><p class="eyebrow">Quiz editor</p><input id="quiz-title" class="title-input" aria-label="Quiz title" maxlength="160"><input id="quiz-description" class="description-input" aria-label="Quiz description" maxlength="1000" placeholder="Add a description"></div><label>Status<select id="quiz-status" class="badge"><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></label></div>
         <div class="editor-layout">
           <aside><h2>Questions</h2><div id="question-list"></div><button type="button" class="add-question" id="add-question">＋ Add question</button></aside>
           <div class="canvas">

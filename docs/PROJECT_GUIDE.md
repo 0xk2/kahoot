@@ -40,9 +40,10 @@ dependencies, frontend framework, bundler, transpiler, or generated application 
 
 Browser surfaces are semantic HTML, CSS, and JavaScript in `public/`. Server modules live in
 `src/`: `auth/` handles creator identity, `contracts/` validates boundaries, `creator/` manages the
-quiz library, `rooms/` owns live-room state, and `player/` owns gameplay and scoring. The development
-harness in `src/harness/` composes these modules with representative data. The portable schema in
-`db/schema.sql` defines durable creator, quiz, session, room, participant, and response records.
+quiz library, `rooms/` owns live-room state, and `player/` owns gameplay and scoring. The production
+entrypoint in `src/server.js` composes them over one required file-backed SQLite database. The
+development harness remains a separate representative-data review surface. The portable schema
+defines durable creator, quiz, session, revision, participant, response, and score records.
 
 Contract parsers normalize and freeze untrusted input and report the failing field through
 `ContractError`. Import the shared boundary from its package entry point:
@@ -60,6 +61,7 @@ because the repository has no external packages and serves native source files d
 node --version
 npm run check
 npm run harness
+QUIZZES_DATABASE=/var/lib/quizzes/runtime.sqlite npm start
 ```
 
 The harness defaults to `http://127.0.0.1:4173`. For review on this machine's tailnet, bind only to
@@ -69,7 +71,7 @@ its Tailscale address:
 HOST=$(tailscale ip -4) npm run harness
 ```
 
-Open `http://sontra.tailc1c4f8.ts.net:4173/docs`. The harness bypasses creator authentication only
+Open `http://sontra.tailc1c4f8.ts.net:4173/reconcile`. The harness bypasses creator authentication only
 on its explicit local review surfaces and stores all data in memory; restarting resets the demo.
 
 ## Test and acceptance workflow

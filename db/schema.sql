@@ -67,6 +67,13 @@ CREATE TABLE IF NOT EXISTS game_sessions (
   ended_at TEXT
 );
 
+CREATE TABLE IF NOT EXISTS game_session_runtime (
+  session_id TEXT PRIMARY KEY REFERENCES game_sessions(id) ON DELETE CASCADE,
+  revision INTEGER NOT NULL DEFAULT 0 CHECK (revision >= 0),
+  progression_mode TEXT NOT NULL DEFAULT 'host' CHECK (progression_mode IN ('host', 'player')),
+  scoring_mode TEXT NOT NULL DEFAULT 'speed_weighted' CHECK (scoring_mode IN ('fixed', 'speed_weighted'))
+);
+
 CREATE TABLE IF NOT EXISTS participants (
   id TEXT PRIMARY KEY,
   session_id TEXT NOT NULL REFERENCES game_sessions(id) ON DELETE CASCADE,
