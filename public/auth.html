@@ -1,0 +1,10 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in | Quizzes</title><link rel="stylesheet" href="/landing.css"></head><body>
+<header class="site-header"><a class="brand" href="/"><span>Q</span> Quizzes</a></header><main>
+<section class="hero"><div class="hero-copy"><p class="eyebrow">Creator account</p><h1>Make your next quiz.</h1><p class="lead">Sign in or create an account to author and host durable live games.</p></div>
+<div class="play-card"><h2 id="heading">Sign in</h2><form id="auth-form">
+<label>Username<input name="username" minlength="3" maxlength="32" required autocomplete="username"></label>
+<label id="display-row" hidden>Display name<input name="displayName" maxlength="80" autocomplete="name"></label>
+<label>Password<input name="password" type="password" minlength="12" required autocomplete="current-password"></label>
+<button>Continue</button><p id="error" class="error" role="alert"></p></form>
+<button id="mode" type="button">Need an account? Register</button></div></section></main><script type="module" src="/auth.js"></script></body></html>

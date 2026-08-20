@@ -1,0 +1,8 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Join a quiz | Quizzes</title><link rel="stylesheet" href="/player.css"></head><body>
+<header><a class="brand" href="/">Quizzes</a><span id="identity"></span></header><main>
+<section id="join" class="panel"><p class="eyebrow">Play live</p><h1>Join the game</h1><form id="join-form">
+<label>Game PIN<input name="joinCode" autocomplete="one-time-code" maxlength="6" required></label>
+<label>Nickname<input name="nickname" placeholder="Your nickname" maxlength="40" autocomplete="nickname" required></label>
+<button>Let's go</button><p class="error" role="alert"></p></form></section>
+<section id="game" class="panel hidden" aria-live="polite"></section></main><script type="module" src="/app-player.js"></script></body></html>

@@ -48,7 +48,7 @@ function renderEditor() {
   document.title = pageTitle(`Edit ${quiz.title}`);
   $('#quiz-title').value = quiz.title;
   $('#quiz-description').value = quiz.description ?? '';
-  $('#quiz-status').textContent = quiz.status;
+  $('#quiz-status').value = quiz.status;
   renderQuestions();
   renderQuestion();
 }
@@ -122,6 +122,7 @@ function deleteQuestion() {
 
 async function save() {
   syncQuestion(); quiz.title = $('#quiz-title').value.trim(); quiz.description = $('#quiz-description').value.trim() || null;
+  quiz.status = $('#quiz-status').value;
   try {
     quiz = structuredClone(await request(`/api/creator/quizzes/${quiz.id}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(quiz) }));
     $('#save-state').textContent = 'All changes saved'; toast('Quiz saved'); renderEditor();
